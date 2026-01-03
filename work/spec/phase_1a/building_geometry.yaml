@@ -1,0 +1,300 @@
+# Building Specification - Phase 1A: Base Structure with Cutouts
+# Commercial Building - Myrtle Beach Highway
+# Generated: 2026-01-03
+# Phase: 1A (Geometry Only)
+#
+# MAJOR CORRECTIONS from iteration 002 user feedback:
+#   - Changed from L-shaped to simple rectangle (15.0m × 8.5m)
+#   - Fixed canopy orientation (perpendicular to facade, projecting out)
+#   - Reduced canopy posts from 5 to 3
+#   - Increased door recess depth (1.4m alcove)
+#   - Implemented 3-step descending parapet (front to back)
+#   - Removed decorative corner steps (plain corners)
+#   - Repositioned chimney to right side parapet wall
+#   - Removed back extension (simple 4-wall building)
+
+version: phase_1a
+units: meters
+phase: 1a
+description: "Phase 1A - Base structure geometry with rectangular cutouts for openings. NO window/door details, NO materials."
+
+assumptions:
+  - Entry door height (2.1m) used as primary scale reference for all measurements
+  - Standard US modular brick dimensions assumed (200mm x 100mm x 67mm with mortar)
+  - Simple rectangular footprint confirmed from overhead Google Maps imagery
+  - Wall thickness assumes single-wythe brick with interior finish (~0.18m total)
+  - Roof has minimal slope (1/4:12 to 1/2:12) for drainage, modeled as flat
+  - Canopy posts are Schedule 40 steel pipe (~6-8 inch diameter)
+  - All dimensions have ±10-15% uncertainty except directly observable features
+  - Building date estimated as 1950s-1960s based on architectural style
+  - Coordinate system: front facade faces -Y direction (toward viewer), right side is +X direction
+  - Parapet descends in 3 steps from front to back (stepped roofline)
+  - Chimney is integrated with right side parapet wall (not freestanding on roof)
+
+overall:
+  footprint:
+    shape: rectangle
+    width: 8.5              # X-axis, front facade width (left-right)
+    depth: 15.0             # Y-axis, building depth (front-back)
+    # Total footprint: 127.5 square meters
+  height:
+    wall_height: 3.75       # Ground to main roof line
+    parapet_height_front: 1.05   # Front parapet above roof
+    parapet_height_middle: 0.45  # Middle section parapet above roof
+    parapet_height_rear: 0.0     # Rear has no parapet (flat roof edge)
+    total_height_front: 4.8      # Ground to top of front parapet
+    total_height_middle: 4.2     # Ground to top of middle parapet
+    total_height_rear: 3.75      # Ground to rear roof edge (no parapet)
+
+walls:
+  thickness: 0.18           # Single wythe brick + interior finish
+  height: 3.75
+
+roof:
+  type: flat
+  thickness: 0.20           # Built-up roofing structure
+  elevation: 3.75           # Bottom of roof at wall height
+
+# Simple rectangular footprint
+footprint_geometry:
+  type: rectangle
+  width: 8.5                # Along X-axis (left-right when viewing front)
+  depth: 15.0               # Along Y-axis (front-back)
+  position:
+    x: 0.0                  # Centered on origin
+    y: 0.0
+  description: "Simple rectangular building facing highway with storefront. No extensions or appendages."
+
+# PHASE 1A: Cutout specifications (rectangular holes for windows/doors)
+# These are VOIDS in the walls - actual window/door geometry added in Phase 1B
+cutouts:
+  front_entry_door:
+    width: 1.2
+    height: 2.1
+    wall: front
+    position:
+      x: 0.0                # Centered on front facade
+      y: -4.25              # Front wall position
+      z: 0.0                # Ground level (sill height)
+    recess_depth: 1.4       # Deep recessed alcove
+    type: rectangular_void
+    notes: "Entry door cutout - deep alcove. Actual door geometry added in Phase 1B."
+
+  front_left_display_window:
+    width: 2.5
+    height: 2.2
+    wall: front
+    position:
+      x: -2.45              # Left of center door
+      y: -4.25              # Front wall position
+      z: 0.15               # Sill height above ground
+    reveal_depth: 0.25      # Window reveal into wall thickness
+    type: rectangular_void
+    notes: "Left storefront display window cutout. Actual window frame/glass added in Phase 1B."
+
+  front_right_display_window:
+    width: 2.5
+    height: 2.2
+    wall: front
+    position:
+      x: 2.45               # Right of center door (mirror of left)
+      y: -4.25              # Front wall position
+      z: 0.15               # Sill height above ground
+    reveal_depth: 0.25      # Window reveal into wall thickness
+    type: rectangular_void
+    notes: "Right storefront display window cutout (mirror of left). Actual window frame/glass added in Phase 1B."
+
+  rear_service_door:
+    width: 1.0
+    height: 2.0
+    wall: rear
+    position:
+      x: 0.0                # Approximate - not clearly visible
+      y: 7.5                # Rear wall position
+      z: 0.0                # Ground level
+    type: rectangular_void
+    notes: "Possible rear service door cutout - location approximate. Actual door geometry added in Phase 1B."
+
+  right_side_small_01:
+    width: 0.6
+    height: 0.5
+    wall: right
+    position:
+      x: 4.25               # Right wall position
+      y: 4.0                # Along building depth
+      z: 1.5                # Sill height
+    type: rectangular_void
+    notes: "Small side window cutout (appears blocked in Phase 2 materials)."
+
+  right_side_small_02:
+    width: 0.6
+    height: 0.5
+    wall: right
+    position:
+      x: 4.25               # Right wall position
+      y: 8.0                # Further back on right wall
+      z: 1.2                # Sill height
+    type: rectangular_void
+    notes: "Small side window cutout (appears blocked in Phase 2 materials)."
+
+  left_side_small_01:
+    width: 0.6
+    height: 0.5
+    wall: left
+    position:
+      x: -4.25              # Left wall position
+      y: 6.0                # Along building depth
+      z: 1.5                # Sill height
+    type: rectangular_void
+    notes: "Small side window cutout (appears blocked in Phase 2 materials)."
+
+# Front canopy/awning structure - PERPENDICULAR orientation
+canopy:
+  enabled: true
+  width: 8.5                # Spans full front facade width
+  depth: 2.5                # Projects OUT from building toward street (perpendicular to facade)
+  height_clearance: 2.85    # Bottom of canopy above ground
+  thickness: 0.35           # Structural depth of canopy
+  orientation: perpendicular  # Extends OUT from facade toward street
+  position:
+    x: 0.0                  # Centered on building
+    y: -2.5                 # Projects forward from front wall (negative Y is toward viewer)
+    z_bottom: 2.85          # Bottom elevation above ground
+
+  support_posts:
+    count: 3                # THREE posts (left, center, right)
+    diameter: 0.18          # 6-8 inch steel pipe
+    spacing: 3.5            # Approximate center-to-center spacing
+    positions:
+      # Posts positioned along front edge of canopy
+      - x: -3.0             # Left post (approximately 1.75m from left edge)
+        y: -2.5
+        z: 0.0              # Ground level
+      - x: 0.0              # Center post
+        y: -2.5
+        z: 0.0              # Ground level
+      - x: 3.0              # Right post (approximately 1.75m from right edge)
+        y: -2.5
+        z: 0.0              # Ground level
+    notes: "Three posts evenly distributed across front."
+
+  beam:
+    height: 0.15            # I-beam depth
+    width: 0.10             # I-beam width
+    position_z: 3.15        # Flush with canopy underside (2.85 + 0.35 - 0.05)
+    notes: "Horizontal beam connecting post tops, spans full width, I-beam or channel section"
+
+# Chimney/flue structure - ATTACHED TO RIGHT SIDE PARAPET WALL
+chimney:
+  enabled: true
+  width: 0.8
+  depth: 0.8
+  base_elevation: 4.8       # Starts at top of front parapet (where it attaches)
+  height_above_parapet: 0.9 # Extends above parapet attachment point
+  total_height: 5.7         # From ground to chimney top (4.8 + 0.9)
+  attachment: right_side_parapet_wall
+  position:
+    x: 4.25                 # Right side of building (at right wall)
+    y: 5.0                  # Front third of building depth
+    z: 4.8                  # Attached at top of front parapet
+  notes: "Square profile, integrated with right side parapet wall structure, NOT freestanding on roof."
+
+# Stepped parapet wall system - THREE LEVELS descending front to back
+parapet:
+  style: stepped_descending
+  thickness: 0.10           # Single wythe
+
+  stepped_configuration:
+    type: three_level_front_to_back
+    description: "Parapet descends in 3 distinct steps from front (tallest) to back (no parapet)"
+
+    # Front section (tallest)
+    front_height: 1.05      # Above roof surface
+    front_span: 5.0         # Covers front 5.0m of building depth
+    front_total_elevation: 4.8  # 3.75 wall + 1.05 parapet
+
+    # Middle section
+    middle_height: 0.45     # Above roof surface
+    middle_span: 5.0        # Covers middle 5.0m (from 5.0m to 10.0m)
+    middle_total_elevation: 4.2  # 3.75 wall + 0.45 parapet
+    step_down_1: 0.6        # Drop from front to middle
+
+    # Rear section (no parapet)
+    rear_height: 0.0        # No parapet at rear
+    rear_span: 5.0          # Covers rear 5.0m (from 10.0m to 15.0m)
+    rear_total_elevation: 3.75  # Wall height only, flat roof edge
+    step_down_2: 0.45       # Drop from middle to rear
+
+    step_positions:
+      - at_depth: 5.0       # First step down at 5.0m from front
+      - at_depth: 10.0      # Second step down at 10.0m from front
+
+    notes: "Three-level stepped parapet creates distinctive profile when viewed from side. Front is tallest (1.05m), middle is medium (0.45m), rear has no parapet (0.0m). Creates stepped silhouette characteristic of mid-century commercial architecture."
+
+  corners:
+    style: plain_square
+    description: "Simple 90-degree corners, no decorative elements, no stepped/ziggurat patterns"
+    notes: "All four corners are plain square brick edges. NO decorative corner blocks or raised elements."
+
+# Foundation visible above grade
+foundation:
+  exposed_height: 0.28      # Portion visible above ground
+  notes: "Poured concrete foundation visible above grade"
+
+# PHASE 1A: Placeholder colors for visualization
+# Simple solid colors to verify geometry - NOT realistic materials
+phase_1a_colors:
+  walls: "#808080"          # Medium gray - neutral base color
+  roof: "#404040"           # Dark gray - to distinguish from walls
+  parapet: "#8B4513"        # Brown - to distinguish from walls
+  canopy_roof: "#C0C0C0"    # Light gray - to see canopy structure
+  canopy_posts: "#8B4513"   # Brown - to make posts visible
+  canopy_beam: "#8B4513"    # Brown - consistent with posts
+  foundation: "#606060"     # Dark gray - to distinguish from walls
+  chimney: "#8B4513"        # Brown - to distinguish from parapet
+  cutouts: "#000000"        # Black - high contrast to verify holes exist
+  notes: "These are PLACEHOLDER colors for Phase 1A geometry visualization. Realistic materials applied in Phase 2."
+
+tolerances:
+  dimension_tolerance: 0.05
+  angle_tolerance_degrees: 1.0
+  allow_non_manifold: false
+  max_face_area: 10.0
+
+coordinate_system:
+  origin: center_of_footprint_at_ground
+  axes:
+    x: left_right          # Negative X is left, positive X is right when viewing front
+    y: front_back          # Negative Y is front (toward viewer), positive Y is back
+    z: up                  # Positive Z is up
+  notes: "Origin at ground level, centered on rectangular building footprint. Front facade faces negative Y direction (toward viewer/street)."
+
+# Validation targets for metrics checking (Phase 1A geometry)
+validation_targets:
+  overall_width: 8.5
+  overall_depth: 15.0
+  wall_height: 3.75
+  parapet_height_front: 1.05
+  parapet_height_middle: 0.45
+  parapet_height_rear: 0.0
+  total_height_front: 4.8
+  total_height_middle: 4.2
+  total_height_rear: 3.75
+  front_door_width: 1.2
+  front_door_height: 2.1
+  front_door_recess: 1.4
+  display_window_width: 2.5
+  display_window_height: 2.2
+  window_sill_height: 0.15
+  canopy_width: 8.5
+  canopy_depth: 2.5
+  canopy_projection: 2.5
+  canopy_clearance: 2.85
+  canopy_post_count: 3
+  chimney_total_height: 5.7
+  chimney_position_x: 4.25
+  chimney_position_y: 5.0
+  foundation_exposed: 0.28
+  canopy_beam_height: 0.15
+  canopy_beam_width: 0.10
+  canopy_beam_position_z: 3.15
