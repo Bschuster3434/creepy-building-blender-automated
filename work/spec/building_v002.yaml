@@ -1,0 +1,365 @@
+# Building Specification v002
+# Creepy Abandoned Commercial Building - Myrtle Beach Highway
+# Generated from: work/analysis/reference_analysis_001.md
+# Date: 2026-01-02
+#
+# This specification captures the L-shaped single-story brick commercial building
+# with its distinctive features: front canopy, stepped parapet corners, and severe
+# weathering that contributes to its unsettling appearance.
+
+version: v002
+units: meters
+
+assumptions:
+  - Entry door height (2.1m) used as primary scale reference for all measurements
+  - Standard US modular brick dimensions assumed (200mm x 100mm x 67mm with mortar)
+  - L-shaped footprint is original construction (not later addition) based on matching materials and weathering
+  - Wall thickness assumes single-wythe brick with interior finish (~0.18m total)
+  - Roof has minimal slope (1/4:12 to 1/2:12) for drainage, modeled as flat
+  - Small side wall openings are blocked/filled based on visual observation
+  - Interior is completely gutted or deteriorated (windows appear pitch black)
+  - Canopy posts are Schedule 40 steel pipe (~6-8 inch diameter)
+  - All dimensions have ±10-15% uncertainty except directly observable features
+  - Building date estimated as 1950s-1960s based on architectural style
+  - Coordinate system: front facade faces +Y direction, right side is +X direction
+
+overall:
+  footprint:
+    shape: L-shape
+    # Main rectangular section dimensions
+    main_width: 11.0        # X-axis, front facade width
+    main_depth: 12.5        # Y-axis, main building depth
+    # Side extension dimensions (forms the L)
+    extension_width: 4.5    # Extension perpendicular to main structure
+    extension_depth: 3.5    # Extension projects beyond main rear wall
+    # Total approximate footprint: 167 square meters
+  height:
+    wall_height: 3.75       # Ground to roof line
+    parapet_height: 0.70    # Parapet above roof
+    total_height: 4.45      # Ground to top of parapet
+
+walls:
+  thickness: 0.18           # Single wythe brick + interior finish
+  material: brick_red_weathered
+  height: 3.75
+
+roof:
+  type: flat
+  thickness: 0.20           # Built-up roofing structure
+  elevation: 3.75           # Bottom of roof at wall height
+  material: tar_and_gravel_gray
+
+# L-shaped footprint definition
+# The building consists of:
+# - Main rectangle: 11.0m (W) x 12.5m (D) - front-facing section
+# - Extension: 4.5m (W) x 3.5m (D) - projects from right rear
+footprint_geometry:
+  type: L-shape
+  main_rectangle:
+    width: 11.0             # Along X-axis (left-right when viewing front)
+    depth: 12.5             # Along Y-axis (front-back)
+    position:
+      x: 0.0                # Centered on origin
+      y: 0.0
+  extension_rectangle:
+    width: 4.5              # Perpendicular extension
+    depth: 3.5              # Projects beyond main rear
+    position:
+      x: 3.75               # Right side of main building (right edge at 5.5 + 4.5 = 10.0)
+      y: 12.5               # Starts at rear of main building
+  description: "Main building faces highway with storefront. Extension on right side (when viewing front) creates L-shape."
+
+openings:
+  doors:
+    - id: F-01_front_entry
+      type: double
+      width: 1.6
+      height: 2.1
+      wall: front
+      position:
+        x: 0.0              # Centered on front facade
+        sill_height: 0.0
+      recess_depth: 0.3     # Entry alcove depth
+      material: glass_multi_pane_metal_frame
+      condition: deteriorated
+      notes: "Multi-pane glass design (10-15 panes per door), appears broken/boarded, metal frame visible"
+
+    - id: B-03_rear_service
+      type: single
+      width: 1.0
+      height: 2.0
+      wall: rear
+      position:
+        x: 0.0              # Approximate - not clearly visible in photos
+        sill_height: 0.0
+      condition: ambiguous
+      notes: "Possible rear service door - not clearly visible in available reference images"
+
+  windows:
+    - id: F-02_left_display
+      width: 2.3
+      height: 1.9
+      wall: front
+      position:
+        x: -3.15            # Left of center door (1.6/2 door + 0.4 gap + 2.3/2 window = 3.15m)
+        sill_height: 0.45
+      reveal_depth: 0.25    # Deep window reveal into wall
+      material: glass_dark_white_frame
+      condition: severely_deteriorated
+      notes: "Large storefront window, appears completely dark/black inside, white trim frame"
+
+    - id: F-03_right_display
+      width: 2.3
+      height: 1.9
+      wall: front
+      position:
+        x: 3.15             # Right of center door (mirror of F-02)
+        sill_height: 0.45
+      reveal_depth: 0.25
+      material: glass_dark_white_frame
+      condition: severely_deteriorated
+      notes: "Mirror of left display window, identical deterioration and darkness"
+
+    - id: R-02_side_small_01
+      width: 0.6
+      height: 0.5
+      wall: right
+      position:
+        x: 4.0              # Approximate position along right wall
+        sill_height: 1.5
+      material: blocked_or_filled
+      condition: blocked
+      notes: "Small opening, appears blocked or filled with brick, dark rectangular patch visible"
+
+    - id: R-02_side_small_02
+      width: 0.6
+      height: 0.5
+      wall: right
+      position:
+        x: 8.0              # Further back on right wall
+        sill_height: 1.2
+      material: blocked_or_filled
+      condition: blocked
+      notes: "Similar to R-02_side_small_01, appears blocked"
+
+    - id: L-03_side_small_01
+      width: 0.6
+      height: 0.5
+      wall: left
+      position:
+        x: 6.0              # Approximate position on left wall
+        sill_height: 1.5
+      material: blocked_or_filled
+      condition: blocked
+      notes: "Small opening on left side, appears blocked or filled"
+
+# Front canopy/awning structure
+canopy:
+  enabled: true
+  width: 11.0               # Matches full building width
+  depth: 2.75               # Projection from front facade
+  height_clearance: 2.85    # Bottom of canopy above ground
+  thickness: 0.35           # Structural depth of canopy
+  material: sheet_metal_white_weathered
+  position:
+    x: 0.0                  # Centered on building
+    y: -2.75                # Projects forward from front wall
+
+  support_posts:
+    count: 5
+    diameter: 0.18          # 6-8 inch steel pipe
+    material: steel_severely_rusted
+    spacing: 2.2            # Center-to-center spacing
+    positions:
+      # Posts positioned along front edge of canopy
+      - x: -4.4
+        y: -2.75
+      - x: -2.2
+        y: -2.75
+      - x: 0.0
+        y: -2.75
+      - x: 2.2
+        y: -2.75
+      - x: 4.4
+        y: -2.75
+    condition: poor_severe_corrosion
+    notes: "Brown/rust colored, at least one post visibly bent/damaged, structural stability questionable"
+
+  beam:
+    material: steel_i_beam_painted_white
+    condition: paint_peeling_rust_visible
+    notes: "Horizontal beam connecting post tops, spans full width, I-beam or channel section"
+
+# Chimney/flue structure
+chimney:
+  enabled: true
+  width: 0.7
+  depth: 0.7
+  base_elevation: 3.75      # Starts at roof level
+  height_above_parapet: 0.75
+  total_height: 5.2         # From ground to chimney top
+  material: brick_red_matching_walls
+  position:
+    x: 1.5                  # Approximately center-right of main building
+    y: 6.0                  # Roughly center of main building depth
+  condition: moderate_deterioration
+  notes: "Square profile, appears capped, some deterioration at top, likely heating system flue"
+
+# Parapet wall system with decorative corner steps
+parapet:
+  height: 0.70              # Above roof surface
+  thickness: 0.10           # Single wythe
+  material: brick_red_matching_walls
+
+  corner_steps:
+    enabled: true
+    style: ziggurat_three_step
+    step_setback: 0.18      # Each step sets back this amount
+    step_height_reduction: 0.15  # Each step reduces height by this amount
+    count_per_corner: 3
+    notes: "Decorative stepped/castellated corners creating Art Deco/Mid-Century aesthetic"
+
+  coping:
+    material: deteriorated_concrete_or_metal
+    condition: largely_missing
+    notes: "Original coping appears severely deteriorated or missing, exposed brick on top edge"
+
+# Foundation visible above grade
+foundation:
+  exposed_height: 0.35      # Portion visible above ground
+  material: concrete_gray
+  condition: some_cracking
+  notes: "Poured concrete foundation, vegetation growing against base, appears to be standard depth below frost line"
+
+materials:
+  # Primary building materials
+  walls: brick_red_weathered
+  roof: tar_and_gravel_gray
+
+  # Opening materials
+  door: glass_broken_metal_frame_deteriorated
+  windows: glass_dark_opaque_white_frame
+
+  # Structural materials
+  canopy_roof: sheet_metal_white_faded
+  canopy_posts: steel_pipe_rust_brown
+  canopy_beam: steel_painted_white_peeling
+  chimney: brick_red_matching_walls
+  parapet: brick_red_matching_walls
+  foundation: concrete_gray_weathered
+
+  # Material detail specifications for rendering
+  material_details:
+    brick_red_weathered:
+      base_color: medium_red_terracotta
+      color_variations:
+        - dark_red_brown_patches
+        - light_faded_bleached_areas
+        - green_algae_staining
+        - black_organic_staining
+        - white_efflorescence
+      texture: smooth_face_running_bond
+      condition: moderate_to_severe_weathering
+      mortar_color: light_gray_eroded
+      notes: "Non-uniform discoloration creates organic diseased appearance, vertical water streaking visible"
+
+    glass_dark_opaque_white_frame:
+      transparency: completely_opaque
+      interior_color: pitch_black
+      frame_color: white_weathered
+      frame_material: aluminum_likely
+      condition: broken_or_painted_over
+      notes: "All windows appear completely dark creating dead eyes effect, no visible interior detail"
+
+    steel_pipe_rust_brown:
+      base_material: steel_schedule_40_pipe
+      surface_color: brown_rust_orange
+      paint_remaining: less_than_10_percent
+      corrosion_level: severe_throughout
+      structural_condition: questionable_unsafe
+      notes: "Heavy rust throughout, at least one post bent/damaged, creates unsettling organic appearance"
+
+    tar_and_gravel_gray:
+      surface_type: built_up_roofing_bur
+      color: medium_to_dark_gray
+      texture: granular_gravel_surface
+      condition: deteriorated_ponding_visible
+      notes: "Multiple layers visible in deteriorated areas, visible ponding suggests inadequate drainage"
+
+# Weathering and deterioration patterns (critical for creepy aesthetic)
+weathering:
+  overall_condition: severe_long_term_abandonment
+
+  brick_discoloration:
+    pattern: irregular_organic_patches
+    vertical_streaking: extensive_water_damage
+    biological_growth: algae_moss_green_black
+    efflorescence: white_mineral_deposits_present
+
+  window_darkness:
+    all_windows_opaque: true
+    interior_visibility: none_completely_black
+    aesthetic_effect: dead_eyes_unknowable_interior
+
+  canopy_posts:
+    rust_coverage: 90_percent_plus
+    structural_damage: bent_leaning_posts_visible
+    paint_loss: almost_complete
+
+  overall_aesthetic: diseased_rotting_dangerous_abandoned
+
+tolerances:
+  dimension_tolerance: 0.05
+  angle_tolerance_degrees: 1.0
+  allow_non_manifold: false
+  max_face_area: 10.0
+
+coordinate_system:
+  origin: center_of_footprint_at_ground
+  axes:
+    x: left_right          # Negative X is left, positive X is right when viewing front
+    y: front_back          # Negative Y is front (toward viewer), positive Y is back
+    z: up                  # Positive Z is up
+  notes: "Origin at ground level, centered on main building footprint (not including extension). Front facade faces negative Y direction (toward viewer)."
+
+# Rendering guidelines for preserving creepy aesthetic
+rendering_notes:
+  lighting:
+    - "Deep shadows under canopy critical for atmosphere"
+    - "Strong contrast between lit and shadowed areas"
+    - "Avoid overly bright cheerful lighting"
+    - "Consider overcast sky or dramatic lighting"
+
+  materials:
+    - "Accurate weathering patterns from reference photos essential"
+    - "Non-uniform discoloration creates diseased appearance"
+    - "Window darkness (pitch black interior) is defining characteristic"
+    - "Rust texture on posts must show organic deterioration"
+
+  geometry:
+    - "Preserve L-shape complexity and shadows"
+    - "Accurate stepped parapet corners add to architectural strangeness"
+    - "Include subtle irregularities - bent posts, settling, sagging"
+    - "Deep window reveals create shadow depth"
+
+  context:
+    - "Dirt/gravel ground surface preferred over clean pavement"
+    - "Vegetation encroachment adds to abandonment aesthetic"
+    - "Minimal or no context elements - isolation is key"
+    - "Avoid anything that suggests current habitation or maintenance"
+
+# Validation targets for metrics checking
+validation_targets:
+  overall_width: 11.0
+  overall_depth_main: 12.5
+  overall_height: 4.45
+  wall_height: 3.75
+  parapet_height: 0.70
+  front_door_width: 1.6
+  front_door_height: 2.1
+  display_window_width: 2.3
+  display_window_height: 1.9
+  window_sill_height: 0.45
+  canopy_projection: 2.75
+  canopy_clearance: 2.85
+  chimney_total_height: 5.2

@@ -10,3 +10,13 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Node modules
+node_modules/
+
+# Local environment
+.claude/
+config/local.env
+
+# Temp files
+nul

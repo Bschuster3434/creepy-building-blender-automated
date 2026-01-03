@@ -1,0 +1,795 @@
+{
+  "critique_metadata": {
+    "iteration": "003",
+    "date": "2026-01-03",
+    "critic": "Visual Critic Agent",
+    "spec_version": "v004",
+    "reference_images_reviewed": 18,
+    "render_views_analyzed": 6
+  },
+
+  "executive_summary": {
+    "overall_assessment": "CRITICAL FAILURES - Iteration 003 has completely missing front facade openings (windows and doors). This is an unacceptable and obvious error. The model appears to show only basic geometric masses without proper opening implementation.",
+    "critical_issues_count": 5,
+    "major_issues_count": 8,
+    "minor_issues_count": 4,
+    "total_issues": 17,
+    "recommendation": "REJECT - Requires immediate rework to implement front facade openings before any other work proceeds."
+  },
+
+  "issues": [
+    {
+      "id": "CRIT-001",
+      "severity": "CRITICAL",
+      "category": "openings",
+      "title": "Front Facade Windows Completely Missing",
+      "description": "The two large display windows (F-02_left_display and F-03_right_display) specified in building_v004.yaml are COMPLETELY MISSING from the front facade. The front view (02_front_view.png) shows a solid wall where there should be two 2.5m × 2.2m storefront windows.",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png",
+          "05_isometric_front_right.png",
+          "06_isometric_front_left.png"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152452.png",
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152551.png",
+          "inputs/reference/exterior_generated/Front Facing View.png"
+        ]
+      },
+      "spec_reference": {
+        "path": "openings.windows[0]",
+        "id": "F-02_left_display",
+        "expected_values": {
+          "width": 2.5,
+          "height": 2.2,
+          "position_x": -2.45,
+          "sill_height": 0.15
+        }
+      },
+      "impact": "This is the most defining visual feature of the building. The large dark storefront windows create the 'dead eyes' aesthetic that is critical to the creepy abandoned appearance. Without them, the building loses its entire character.",
+      "fix_required": "Implement both front display windows (F-02 and F-03) as boolean cut operations through the front facade wall. Ensure proper positioning, sizing, and deep reveal depth (0.25m) as specified."
+    },
+
+    {
+      "id": "CRIT-002",
+      "severity": "CRITICAL",
+      "category": "openings",
+      "title": "Front Entry Door Completely Missing",
+      "description": "The central double door (F-01_front_entry) is COMPLETELY MISSING from the front facade. The front view shows a solid wall where there should be a 1.2m × 2.1m recessed entrance with French doors.",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png",
+          "05_isometric_front_right.png",
+          "06_isometric_front_left.png"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152452.png",
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152613.png",
+          "inputs/reference/exterior_generated/Front Facing View.png"
+        ]
+      },
+      "spec_reference": {
+        "path": "openings.doors[0]",
+        "id": "F-01_front_entry",
+        "expected_values": {
+          "width": 1.2,
+          "height": 2.1,
+          "position_x": 0.0,
+          "recess_depth": 1.4
+        }
+      },
+      "impact": "The entrance is a primary architectural feature. The deep recessed alcove (1.4m) creates important shadowing and depth. Without it, the facade appears as a flat blank wall.",
+      "fix_required": "Create recessed entrance alcove with 1.4m depth, including side walls of the recess. Implement double French door opening centered on facade. The recess geometry is critical for creating proper shadows and depth."
+    },
+
+    {
+      "id": "CRIT-003",
+      "severity": "CRITICAL",
+      "category": "geometry",
+      "title": "Front Facade Appears as Solid Blank Wall",
+      "description": "The entire front facade in iteration 003 renders as a completely solid wall with no openings whatsoever. This bears no resemblance to the reference images which show a storefront with symmetrical window-door-window configuration.",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png"
+        ],
+        "reference_comparison": [
+          "All Google Maps front-facing photos show window-door-window layout",
+          "All AI-generated front views show three distinct openings"
+        ]
+      },
+      "impact": "This makes the model completely unusable and unrecognizable as the target building. The front facade is the primary identifying feature.",
+      "fix_required": "Complete implementation of all front facade openings as specified in building_v004.yaml sections openings.doors[0] and openings.windows[0-1]."
+    },
+
+    {
+      "id": "CRIT-004",
+      "severity": "CRITICAL",
+      "category": "materials",
+      "title": "Canopy/Awning Material Incorrect - Should Be White/Light Gray",
+      "description": "The canopy appears dark brown/black in the renders, but reference images clearly show a white or light gray weathered sheet metal canopy. This is a highly visible element that significantly affects the overall appearance.",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png",
+          "05_isometric_front_right.png",
+          "06_isometric_front_left.png"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152452.png",
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152613.png",
+          "inputs/reference/exterior_generated/Front Facing View.png"
+        ]
+      },
+      "spec_reference": {
+        "path": "canopy.material",
+        "expected_value": "sheet_metal_white_weathered",
+        "path_2": "materials.canopy_roof",
+        "expected_value_2": "sheet_metal_white_faded"
+      },
+      "impact": "The white canopy is a signature visual element that contrasts with the red brick. The dark appearance in renders completely changes the building's character.",
+      "fix_required": "Change canopy material to white/light gray weathered sheet metal. Should show fading, rust staining, and weathering but maintain light base color."
+    },
+
+    {
+      "id": "CRIT-005",
+      "severity": "CRITICAL",
+      "category": "materials",
+      "title": "Overall Material Colors Are Wrong - Building Appears Too Dark",
+      "description": "The entire building appears significantly darker than reference images. The brick should be medium red/terracotta color, not dark brown. This affects the entire aesthetic and makes the building unrecognizable.",
+      "evidence": {
+        "affected_views": [
+          "All render views show dark brown coloring",
+          "02_front_view.png shows almost chocolate brown walls",
+          "03_right_side_view.png shows dark brown instead of red brick"
+        ],
+        "reference_comparison": [
+          "All Google Maps photos show medium red brick with weathering",
+          "All AI-generated views show red/terracotta brick color"
+        ]
+      },
+      "spec_reference": {
+        "path": "materials.material_details.brick_red_weathered.base_color",
+        "expected_value": "medium_red_terracotta"
+      },
+      "impact": "Color is fundamental to recognition. The dark brown appearance makes the building look like a different structure entirely.",
+      "fix_required": "Adjust all brick materials to medium red/terracotta base color with weathering variations as specified in material_details section. Add color variation patches but maintain recognizable red brick appearance."
+    },
+
+    {
+      "id": "MAJ-001",
+      "severity": "MAJOR",
+      "category": "geometry",
+      "title": "Canopy Beam Not Visible or Incorrectly Modeled",
+      "description": "Reference images clearly show a horizontal I-beam or channel beam connecting the tops of the canopy posts. This structural element is not visible in the front view renders.",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png",
+          "05_isometric_front_right.png"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152613.png - clearly shows horizontal beam",
+          "inputs/reference/exterior_generated/Front Facing View.png - beam visible"
+        ]
+      },
+      "spec_reference": {
+        "path": "canopy.beam",
+        "expected_values": {
+          "height": 0.15,
+          "width": 0.10,
+          "position_z": 3.15,
+          "material": "steel_i_beam_painted_white"
+        }
+      },
+      "impact": "The beam is an important structural detail that adds realism and is clearly visible in photos. Its absence makes the canopy appear incomplete.",
+      "fix_required": "Model horizontal I-beam spanning full width of canopy at post tops. Should be white painted steel with weathering/rust showing through."
+    },
+
+    {
+      "id": "MAJ-002",
+      "severity": "MAJOR",
+      "category": "geometry",
+      "title": "Canopy Posts May Not Extend to Ground",
+      "description": "Cannot clearly determine from front view if canopy posts extend all the way to ground level. Reference images show posts going from ground to canopy beam with no breaks.",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png - posts not clearly visible or may be truncated"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152613.png - posts clearly extend to ground"
+        ]
+      },
+      "spec_reference": {
+        "path": "canopy.support_posts",
+        "note": "Posts should extend from ground (z=0) to canopy beam (z≈3.15)"
+      },
+      "impact": "Posts that don't extend to ground would be structurally nonsensical and visually incorrect.",
+      "fix_required": "Verify posts extend from z=0 (ground) to z=3.15 (canopy beam height) as continuous cylinders."
+    },
+
+    {
+      "id": "MAJ-003",
+      "severity": "MAJOR",
+      "category": "geometry",
+      "title": "Chimney Position and Attachment Unclear",
+      "description": "The chimney appears to be present in the top view but its attachment to the right side parapet wall cannot be verified from available render views. Side views are needed to confirm correct attachment.",
+      "evidence": {
+        "affected_views": [
+          "01_top_view.png - shows chimney mass on right side",
+          "03_right_side_view.png - should show chimney attachment but view doesn't clearly display it"
+        ],
+        "reference_comparison": [
+          "inputs/reference/exterior_generated/Right Side Facing View.png - shows chimney attached to right parapet",
+          "inputs/reference/exterior_generated/Corner View 2.png - shows chimney integration"
+        ]
+      },
+      "spec_reference": {
+        "path": "chimney",
+        "expected_values": {
+          "attachment": "right_side_parapet_wall",
+          "position_x": 4.25,
+          "position_y": 5.0,
+          "base_elevation": 4.8
+        }
+      },
+      "impact": "Chimney attachment is important for structural realism. Freestanding chimney on roof would be incorrect.",
+      "fix_required": "Verify chimney is built into/attached to right side parapet wall structure, not freestanding on roof surface. May need additional render views to confirm."
+    },
+
+    {
+      "id": "MAJ-004",
+      "severity": "MAJOR",
+      "category": "geometry",
+      "title": "Foundation/Base Not Clearly Visible",
+      "description": "The exposed concrete foundation specified at 0.28m height is not clearly visible in any render view. Reference images show a distinct lighter gray concrete base below the brick walls.",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png - no visible foundation distinction",
+          "03_right_side_view.png - no visible foundation"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152452.png - light gray foundation visible",
+          "inputs/reference/exterior_generated/Front Facing View.png - foundation visible"
+        ]
+      },
+      "spec_reference": {
+        "path": "foundation",
+        "expected_values": {
+          "exposed_height": 0.28,
+          "material": "concrete_gray"
+        }
+      },
+      "impact": "Foundation provides visual grounding and is a distinct architectural element in photos.",
+      "fix_required": "Model exposed concrete foundation band at base of walls, 0.28m height, lighter gray color distinct from brick."
+    },
+
+    {
+      "id": "MAJ-005",
+      "severity": "MAJOR",
+      "category": "geometry",
+      "title": "Parapet Stepped Configuration Not Verifiable",
+      "description": "The side views (03_right_side_view.png and 04_left_side_view.png) should clearly show the 3-level stepped parapet descending from front to back, but the views are too dark or unclear to verify this critical feature.",
+      "evidence": {
+        "affected_views": [
+          "03_right_side_view.png - appears mostly dark, stepping unclear",
+          "04_left_side_view.png - appears mostly dark, stepping unclear"
+        ],
+        "reference_comparison": [
+          "inputs/reference/exterior_generated/Left Side Facing View.png - CLEARLY shows 3 steps",
+          "inputs/reference/exterior_generated/Right Side Facing View.png - shows stepped profile"
+        ]
+      },
+      "spec_reference": {
+        "path": "parapet.stepped_configuration",
+        "expected_values": {
+          "front_height": 1.05,
+          "middle_height": 0.45,
+          "rear_height": 0.0,
+          "step_positions": [5.0, 10.0]
+        }
+      },
+      "impact": "The stepped parapet is the signature architectural feature visible in all side views. It must be clearly visible and correctly configured.",
+      "fix_required": "Verify 3-level parapet stepping is correctly implemented. May need better lighting or camera positioning in side view renders to verify. Ensure steps occur at 5.0m and 10.0m depths."
+    },
+
+    {
+      "id": "MAJ-006",
+      "severity": "MAJOR",
+      "category": "materials",
+      "title": "Side Wall Openings Not Visible or Verified",
+      "description": "The blocked/filled small windows on right and left sides (R-02_side_small_01, R-02_side_small_02, L-03_side_small_01) cannot be verified in the dark side view renders.",
+      "evidence": {
+        "affected_views": [
+          "03_right_side_view.png - too dark to see details",
+          "04_left_side_view.png - too dark to see details"
+        ],
+        "reference_comparison": [
+          "inputs/reference/exterior_generated/Right Side Facing View.png - shows small dark rectangular patches",
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152534.png - side openings visible"
+        ]
+      },
+      "spec_reference": {
+        "path": "openings.windows[2-4]",
+        "note": "Small blocked openings on side walls"
+      },
+      "impact": "These small details add to the weathered/blocked appearance. While minor individually, they contribute to overall accuracy.",
+      "fix_required": "Implement small blocked window openings on side walls as dark rectangular patches. Ensure they are visible in properly lit renders."
+    },
+
+    {
+      "id": "MAJ-007",
+      "severity": "MAJOR",
+      "category": "materials",
+      "title": "Brick Texture and Weathering Pattern Not Apparent",
+      "description": "The brick material in renders appears as solid color blocks without visible brick texture, mortar lines, or weathering patterns. Reference images show clear brick coursing, color variations, and organic weathering stains.",
+      "evidence": {
+        "affected_views": [
+          "All views show smooth solid color rather than brick texture",
+          "02_front_view.png - no visible brick coursing"
+        ],
+        "reference_comparison": [
+          "All Google Maps photos show clear individual brick pattern",
+          "inputs/reference/exterior_generated/Front Facing View.png - shows brick texture detail"
+        ]
+      },
+      "spec_reference": {
+        "path": "materials.material_details.brick_red_weathered",
+        "expected_features": [
+          "smooth_face_running_bond texture",
+          "color_variations patches",
+          "vertical water streaking",
+          "algae/moss staining",
+          "efflorescence (white deposits)"
+        ]
+      },
+      "impact": "Brick texture and weathering are essential for realism and the 'diseased' aesthetic. Solid color blocks look artificial.",
+      "fix_required": "Apply brick texture with visible coursing, mortar joints. Add procedural weathering with color variation, vertical streaking, organic stains, and efflorescence patches as described in material_details."
+    },
+
+    {
+      "id": "MAJ-008",
+      "severity": "MAJOR",
+      "category": "lighting",
+      "title": "Renders Too Dark - Side Views Completely Black",
+      "description": "Side view renders (03_right_side_view.png and 04_left_side_view.png) are almost completely black, making it impossible to verify geometry, materials, or details. This suggests lighting issues or incorrect render settings.",
+      "evidence": {
+        "affected_views": [
+          "03_right_side_view.png - >90% black/very dark",
+          "04_left_side_view.png - >90% black/very dark"
+        ],
+        "reference_comparison": [
+          "Reference views show clearly visible walls, details, and features"
+        ]
+      },
+      "impact": "Cannot critique what cannot be seen. Dark renders prevent verification of critical features like parapet stepping, side openings, chimney attachment, and overall geometry.",
+      "fix_required": "Adjust lighting setup for renders. Add sufficient ambient or fill lighting to make geometry clearly visible. Side views should show wall details, not be predominantly black."
+    },
+
+    {
+      "id": "MIN-001",
+      "severity": "MINOR",
+      "category": "geometry",
+      "title": "Top View Shows Unexpected Small Extension on Right Side",
+      "description": "The top view (01_top_view.png) shows a small rectangular protrusion on the right side of the building. This may be the chimney, but the geometric relationship is unclear. Building should be simple rectangle.",
+      "evidence": {
+        "affected_views": [
+          "01_top_view.png - shows small tan/brown box on right edge"
+        ],
+        "reference_comparison": [
+          "inputs/reference/exterior_generated/Birdseye View.png - simple rectangle with chimney on right parapet"
+        ]
+      },
+      "spec_reference": {
+        "path": "footprint_geometry.type",
+        "expected_value": "rectangle",
+        "note": "Chimney should be attached to parapet wall, not appear as footprint extension"
+      },
+      "impact": "If this is an incorrect geometry extension (not chimney), it violates the simple rectangular footprint requirement.",
+      "fix_required": "Verify footprint is pure rectangle. If protrusion is chimney, ensure it's attached to parapet wall structure at roof level, not extending the building footprint."
+    },
+
+    {
+      "id": "MIN-002",
+      "severity": "MINOR",
+      "category": "geometry",
+      "title": "Canopy Post Count and Spacing Not Verifiable",
+      "description": "Due to front facade being solid (no openings), and limited visibility in renders, cannot verify if exactly 3 posts exist at correct spacing (3.5m apart at positions x = -3.0, 0.0, +3.0).",
+      "evidence": {
+        "affected_views": [
+          "02_front_view.png - posts not clearly distinguishable"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152613.png - clearly shows 3 posts"
+        ]
+      },
+      "spec_reference": {
+        "path": "canopy.support_posts.count",
+        "expected_value": 3,
+        "positions": [-3.0, 0.0, 3.0]
+      },
+      "impact": "Post count was a critical correction from iteration 002 (reduced from 5 to 3). Must be verified as correct.",
+      "fix_required": "Once front facade openings are implemented, verify exactly 3 posts are visible at specified positions."
+    },
+
+    {
+      "id": "MIN-003",
+      "severity": "MINOR",
+      "category": "materials",
+      "title": "Roof Material Not Clearly Visible",
+      "description": "Top view should show tar and gravel roofing material but appears as smooth pink/tan color. Reference shows gray granular roofing surface.",
+      "evidence": {
+        "affected_views": [
+          "01_top_view.png - roof appears smooth tan/pink"
+        ],
+        "reference_comparison": [
+          "inputs/reference/exterior_generated/Birdseye View.png - shows gray granular roof texture"
+        ]
+      },
+      "spec_reference": {
+        "path": "materials.material_details.tar_and_gravel_gray",
+        "expected_features": [
+          "medium_to_dark_gray color",
+          "granular_gravel_surface texture",
+          "deteriorated appearance"
+        ]
+      },
+      "impact": "Roof material contributes to overall abandoned aesthetic. Smooth pink appearance looks incorrect.",
+      "fix_required": "Apply tar and gravel material to roof surface - medium to dark gray, granular texture with visible deterioration and ponding."
+    },
+
+    {
+      "id": "MIN-004",
+      "severity": "MINOR",
+      "category": "materials",
+      "title": "Window Frame Material Not Verifiable",
+      "description": "Once windows are implemented, they should have white weathered aluminum frames as specified. Cannot verify until windows exist.",
+      "evidence": {
+        "affected_views": [
+          "N/A - windows not yet implemented"
+        ],
+        "reference_comparison": [
+          "inputs/reference/google_maps_images/Screenshot 2026-01-02 152452.png - shows white window frames"
+        ]
+      },
+      "spec_reference": {
+        "path": "materials.material_details.glass_dark_opaque_white_frame.frame_color",
+        "expected_value": "white_weathered"
+      },
+      "impact": "White frames provide important contrast against dark window glass and red brick.",
+      "fix_required": "When implementing windows, ensure frames are white weathered aluminum with visible deterioration."
+    }
+  ],
+
+  "issues_by_severity": {
+    "CRITICAL": {
+      "count": 5,
+      "ids": ["CRIT-001", "CRIT-002", "CRIT-003", "CRIT-004", "CRIT-005"],
+      "summary": "All critical issues relate to completely missing front facade features (windows, door) and incorrect base materials (dark colors instead of correct palette). These must be fixed before iteration can proceed."
+    },
+    "MAJOR": {
+      "count": 8,
+      "ids": ["MAJ-001", "MAJ-002", "MAJ-003", "MAJ-004", "MAJ-005", "MAJ-006", "MAJ-007", "MAJ-008"],
+      "summary": "Major issues include missing structural details (beam, foundation), unverifiable features due to dark renders, and lack of material detail (brick texture, weathering)."
+    },
+    "MINOR": {
+      "count": 4,
+      "ids": ["MIN-001", "MIN-002", "MIN-003", "MIN-004"],
+      "summary": "Minor issues are mostly verification tasks and material refinements that can be addressed after critical and major issues are resolved."
+    }
+  },
+
+  "issues_by_category": {
+    "openings": {
+      "count": 2,
+      "severity_breakdown": {"CRITICAL": 2},
+      "description": "Complete absence of front facade openings (windows and door)"
+    },
+    "geometry": {
+      "count": 7,
+      "severity_breakdown": {"CRITICAL": 1, "MAJOR": 4, "MINOR": 2},
+      "description": "Missing or unverifiable geometric features including facade openings, structural details, and element positioning"
+    },
+    "materials": {
+      "count": 7,
+      "severity_breakdown": {"CRITICAL": 2, "MAJOR": 3, "MINOR": 2},
+      "description": "Incorrect base colors, missing textures, and unverifiable material applications"
+    },
+    "lighting": {
+      "count": 1,
+      "severity_breakdown": {"MAJOR": 1},
+      "description": "Render lighting too dark to verify features in side views"
+    }
+  },
+
+  "systematic_comparison": {
+    "front_facade": {
+      "status": "CRITICAL FAILURE",
+      "issues": [
+        "Both display windows completely missing (CRIT-001)",
+        "Entry door completely missing (CRIT-002)",
+        "Facade appears as solid blank wall (CRIT-003)",
+        "Canopy beam not visible (MAJ-001)",
+        "Foundation not visible (MAJ-004)",
+        "Canopy material wrong color (CRIT-004)"
+      ],
+      "percentage_correct": "~15%",
+      "notes": "The front facade is the most important view and is almost completely incorrect. Only the basic wall shape and canopy position approximate the target."
+    },
+    "side_facades": {
+      "status": "UNVERIFIABLE",
+      "issues": [
+        "Renders too dark to evaluate (MAJ-008)",
+        "Parapet stepping not verifiable (MAJ-005)",
+        "Side wall openings not visible (MAJ-006)",
+        "Chimney attachment unclear (MAJ-003)"
+      ],
+      "percentage_correct": "Unknown - cannot evaluate",
+      "notes": "Side views are too dark to perform meaningful critique. Lighting must be corrected."
+    },
+    "top_view": {
+      "status": "PARTIAL SUCCESS",
+      "issues": [
+        "Unexpected small extension on right side (MIN-001)",
+        "Roof material incorrect color/texture (MIN-003)"
+      ],
+      "percentage_correct": "~70%",
+      "notes": "Basic footprint shape appears rectangular as required. Chimney position approximately correct. Material and possible geometric anomaly need verification."
+    },
+    "isometric_views": {
+      "status": "CRITICAL FAILURE",
+      "issues": [
+        "Front facade openings missing (CRIT-001, CRIT-002)",
+        "Canopy material wrong (CRIT-004)",
+        "Overall colors too dark (CRIT-005)"
+      ],
+      "percentage_correct": "~25%",
+      "notes": "Isometric views confirm the critical front facade failures and material issues seen in orthographic views."
+    }
+  },
+
+  "spec_compliance_check": {
+    "building_v004.yaml_sections": {
+      "overall": {
+        "compliant": "PARTIAL",
+        "notes": "Basic dimensions appear approximately correct but cannot verify due to missing features and dark renders"
+      },
+      "walls": {
+        "compliant": "NO",
+        "issues": ["Wrong color (too dark)", "No brick texture visible", "No weathering patterns"]
+      },
+      "roof": {
+        "compliant": "NO",
+        "issues": ["Wrong material appearance (smooth tan instead of gray gravel)"]
+      },
+      "openings": {
+        "compliant": "NO - CRITICAL FAILURE",
+        "issues": ["ALL front facade openings missing", "Side openings not visible/verifiable"]
+      },
+      "canopy": {
+        "compliant": "PARTIAL",
+        "issues": ["Wrong material color (dark instead of white)", "Beam not visible", "Post count not verifiable"]
+      },
+      "chimney": {
+        "compliant": "UNKNOWN",
+        "notes": "Appears to exist in top view but attachment and positioning cannot be verified from available renders"
+      },
+      "parapet": {
+        "compliant": "UNKNOWN",
+        "notes": "Stepped configuration cannot be verified due to dark side view renders"
+      },
+      "foundation": {
+        "compliant": "NO",
+        "issues": ["Not visible in any render view"]
+      },
+      "materials": {
+        "compliant": "NO - CRITICAL FAILURE",
+        "issues": ["Brick color wrong (dark brown vs medium red)", "Canopy color wrong (dark vs white)", "No textures apparent", "No weathering visible"]
+      }
+    }
+  },
+
+  "priority_fix_sequence": {
+    "phase_1_blocking_critical": {
+      "priority": 1,
+      "must_complete_before_next_iteration": true,
+      "fixes": [
+        {
+          "issue_id": "CRIT-001",
+          "action": "Implement both front display windows (F-02 and F-03) with correct dimensions (2.5m × 2.2m), positions (x = ±2.45m), and 0.25m reveal depth",
+          "spec_path": "openings.windows[0-1]"
+        },
+        {
+          "issue_id": "CRIT-002",
+          "action": "Implement front entry door (F-01) with 1.4m deep recessed alcove, including alcove side walls. Door dimensions 1.2m × 2.1m centered on facade",
+          "spec_path": "openings.doors[0]"
+        },
+        {
+          "issue_id": "CRIT-005",
+          "action": "Correct brick material to medium red/terracotta base color. Adjust all material color values to match reference images",
+          "spec_path": "materials.material_details.brick_red_weathered.base_color"
+        },
+        {
+          "issue_id": "CRIT-004",
+          "action": "Change canopy material to white/light gray weathered sheet metal",
+          "spec_path": "canopy.material"
+        },
+        {
+          "issue_id": "MAJ-008",
+          "action": "Fix render lighting to make all views clearly visible. Side views must show wall details, not be predominantly black",
+          "spec_path": "N/A - render setup"
+        }
+      ],
+      "estimated_impact": "Will transform model from unrecognizable to recognizable as target building"
+    },
+    "phase_2_major_features": {
+      "priority": 2,
+      "must_complete_before_next_iteration": true,
+      "fixes": [
+        {
+          "issue_id": "MAJ-001",
+          "action": "Model horizontal I-beam connecting canopy post tops, white painted steel, 0.15m × 0.10m at z=3.15m",
+          "spec_path": "canopy.beam"
+        },
+        {
+          "issue_id": "MAJ-004",
+          "action": "Add exposed concrete foundation band at base, 0.28m height, lighter gray distinct from brick",
+          "spec_path": "foundation"
+        },
+        {
+          "issue_id": "MAJ-007",
+          "action": "Apply brick texture with visible coursing, mortar joints, and procedural weathering (color variations, streaking, stains)",
+          "spec_path": "materials.material_details.brick_red_weathered"
+        },
+        {
+          "issue_id": "MAJ-005",
+          "action": "Verify 3-level stepped parapet is correctly implemented with heights and positions as specified",
+          "spec_path": "parapet.stepped_configuration"
+        },
+        {
+          "issue_id": "MAJ-006",
+          "action": "Implement small blocked window openings on side walls (3 total) as dark rectangular patches",
+          "spec_path": "openings.windows[2-4]"
+        }
+      ],
+      "estimated_impact": "Will add critical details and verification of major architectural features"
+    },
+    "phase_3_refinement": {
+      "priority": 3,
+      "can_defer_to_later_iteration": true,
+      "fixes": [
+        {
+          "issue_id": "MIN-003",
+          "action": "Apply tar and gravel roofing material - medium to dark gray, granular texture",
+          "spec_path": "materials.material_details.tar_and_gravel_gray"
+        },
+        {
+          "issue_id": "MIN-001",
+          "action": "Verify footprint is pure rectangle, chimney correctly attached to parapet (not footprint extension)",
+          "spec_path": "footprint_geometry.type"
+        },
+        {
+          "issue_id": "MIN-002",
+          "action": "Verify exactly 3 canopy posts at x = -3.0, 0.0, +3.0",
+          "spec_path": "canopy.support_posts"
+        },
+        {
+          "issue_id": "MAJ-003",
+          "action": "Verify chimney is attached to right side parapet wall at x=4.25, y=5.0, base_z=4.8",
+          "spec_path": "chimney"
+        }
+      ],
+      "estimated_impact": "Will polish details and ensure all spec requirements are precisely met"
+    }
+  },
+
+  "render_quality_assessment": {
+    "01_top_view.png": {
+      "visibility": "GOOD",
+      "issues": ["Roof material color incorrect", "Possible geometric anomaly on right side"],
+      "useful_for_critique": true
+    },
+    "02_front_view.png": {
+      "visibility": "GOOD",
+      "issues": ["Critical features missing but view is clear"],
+      "useful_for_critique": true,
+      "notes": "Most important view - clearly reveals critical failures"
+    },
+    "03_right_side_view.png": {
+      "visibility": "VERY POOR",
+      "issues": ["Almost completely black/dark", "Cannot verify geometry or features"],
+      "useful_for_critique": false,
+      "notes": "Render must be redone with proper lighting"
+    },
+    "04_left_side_view.png": {
+      "visibility": "VERY POOR",
+      "issues": ["Almost completely black/dark", "Cannot verify geometry or features"],
+      "useful_for_critique": false,
+      "notes": "Render must be redone with proper lighting"
+    },
+    "05_isometric_front_right.png": {
+      "visibility": "GOOD",
+      "issues": ["Shows critical failures clearly"],
+      "useful_for_critique": true,
+      "notes": "Confirms front facade and material issues"
+    },
+    "06_isometric_front_left.png": {
+      "visibility": "GOOD",
+      "issues": ["Shows critical failures clearly"],
+      "useful_for_critique": true,
+      "notes": "Confirms front facade and material issues"
+    }
+  },
+
+  "user_reported_issue_confirmation": {
+    "issue": "Windows and doors are MISSING from the front facade",
+    "status": "CONFIRMED - CRITICAL",
+    "analysis": "User is absolutely correct. The front facade renders as a completely solid wall with no openings whatsoever. This includes:\n- Both large display windows (F-02 and F-03) - completely absent\n- Central entry door (F-01) - completely absent\n- Recessed entrance alcove - completely absent\n\nThis is the most obvious and severe error in iteration 003. The front facade is the primary identifying feature of the building and without these openings the model bears no resemblance to the target structure.",
+    "severity_assessment": "CRITICAL - ITERATION BLOCKING",
+    "immediate_action_required": "Implement all three front facade openings before any other work. This is the highest priority fix."
+  },
+
+  "recommended_actions": {
+    "immediate": [
+      "STOP - Do not proceed with any other work until front facade openings are implemented",
+      "Implement both display windows (F-02, F-03) as boolean cuts through front wall",
+      "Implement entry door (F-01) with 1.4m deep recessed alcove geometry",
+      "Correct brick material color from dark brown to medium red/terracotta",
+      "Correct canopy material from dark to white/light gray weathered metal",
+      "Fix render lighting for side views (currently too dark to evaluate)"
+    ],
+    "next_iteration": [
+      "Add horizontal canopy beam connecting post tops",
+      "Add exposed concrete foundation band at base",
+      "Apply brick texture with coursing, mortar joints, and weathering",
+      "Implement side wall blocked window openings",
+      "Verify parapet stepping is correct (may need better lit renders to confirm)",
+      "Apply tar and gravel roof material",
+      "Verify chimney attachment to right parapet wall"
+    ],
+    "render_improvements": [
+      "Fix side view lighting - walls should be clearly visible, not black",
+      "Consider adding ambient occlusion for depth",
+      "Ensure materials are visible in renders (texture detail should be apparent)",
+      "May need higher resolution renders to show brick detail"
+    ]
+  },
+
+  "overall_assessment_detailed": {
+    "iteration_003_verdict": "REJECT - CRITICAL FAILURES",
+    "readiness_for_next_iteration": "NOT READY",
+    "blocking_issues": 5,
+    "must_fix_before_proceeding": [
+      "CRIT-001: Implement left display window",
+      "CRIT-002: Implement entry door with recess",
+      "CRIT-003: Implement right display window",
+      "CRIT-004: Fix canopy material color",
+      "CRIT-005: Fix brick material color",
+      "MAJ-008: Fix render lighting"
+    ],
+    "estimated_completion": "~25% of target accuracy",
+    "primary_failure_mode": "Complete absence of front facade openings and incorrect base material colors",
+    "architectural_accuracy": "Very Low - missing defining features",
+    "visual_recognition": "Poor - does not clearly resemble target building",
+    "next_steps": "Complete rework of front facade to implement all openings, correct materials, and fix render lighting before re-review."
+  },
+
+  "reference_images_used": [
+    "inputs/reference/google_maps_images/Screenshot 2026-01-02 152452.png",
+    "inputs/reference/google_maps_images/Screenshot 2026-01-02 152518.png",
+    "inputs/reference/google_maps_images/Screenshot 2026-01-02 152534.png",
+    "inputs/reference/google_maps_images/Screenshot 2026-01-02 152551.png",
+    "inputs/reference/google_maps_images/Screenshot 2026-01-02 152613.png",
+    "inputs/reference/google_maps_images/Screenshot 2026-01-02 152635.png",
+    "inputs/reference/google_maps_images/Overhead -Screenshot 2026-01-02 152851.png",
+    "inputs/reference/exterior_generated/Front Facing View.png",
+    "inputs/reference/exterior_generated/Right Side Facing View.png",
+    "inputs/reference/exterior_generated/Left Side Facing View.png",
+    "inputs/reference/exterior_generated/Back View.png",
+    "inputs/reference/exterior_generated/Birdseye View.png",
+    "inputs/reference/exterior_generated/Corner View.jpg",
+    "inputs/reference/exterior_generated/Corner View 2.png"
+  ],
+
+  "spec_documents_referenced": [
+    "work/spec/building_v004.yaml",
+    "work/analysis/reference_analysis_corrections_002.md"
+  ]
+}
