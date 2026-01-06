@@ -1,0 +1,214 @@
+# Phase 1B - Opening Fill Specification
+# Window frames, glass, and door panels to fill Phase 1A cutouts
+#
+# CRITICAL CONSTRAINTS:
+# - Phase 1A base geometry is FROZEN - no modifications allowed
+# - All geometry fits WITHIN existing cutouts from Phase 1A
+# - Placeholder colors only (no materials/textures)
+# - Must preserve Phase 1A vertex/face counts exactly
+
+phase: 1B
+status: in_progress
+description: "Add window frames, glass, and door panels to fill cutouts from Phase 1A"
+
+# Placeholder colors for Phase 1B (per PROJECT_OVERVIEW.md)
+phase_1b_colors:
+  window_frames: "#FFFFFF"      # White for visibility
+  window_glass: "#000000"        # Black placeholder
+  door_frames: "#8B4513"         # Brown
+  door_panels: "#1A1A1A"         # Very dark gray
+
+# Standard dimensions for all openings
+standards:
+  window_frame:
+    thickness: 0.05              # 5cm frame thickness
+    depth: 0.15                  # Frame depth (into wall)
+    # NO INSET - frame fills cutout exactly
+
+  window_glass:
+    thickness: 0.01              # 1cm glass thickness
+    inset_from_frame: 0          # NO GAP - glass fills frame inner opening exactly
+
+  door_frame:
+    thickness: 0.08              # 8cm door frame thickness
+    depth: 0.15                  # Frame depth (into wall)
+    # NO INSET - frame fills cutout exactly
+
+  door_panel:
+    thickness: 0.04              # 4cm door panel thickness
+    inset_from_frame: 0          # NO GAP - panel fills frame inner opening exactly
+
+# Front display windows (Phase 1A cutouts: 2.2m × 2.30m)
+front_left_display_window:
+  cutout_ref: front_left_display_window  # References Phase 1A cutout
+  type: fixed_window
+  frame:
+    enabled: true
+    color: "#FFFFFF"
+    # Frame FILLS cutout exactly (no gaps)
+    width: 2.2                   # EXACT cutout width
+    height: 2.30                 # EXACT cutout height
+    thickness: 0.05
+    depth: 0.15
+  glass:
+    enabled: true
+    color: "#000000"             # Placeholder black
+    # Glass fills frame inner opening exactly (NO gap)
+    # Frame inner opening: (2.2 - 2×0.05) × (2.30 - 2×0.05) = 2.1 × 2.2
+    width: 2.1                   # Frame inner width
+    height: 2.2                  # Frame inner height
+    thickness: 0.01
+  position_ref: phase_1a_cutout  # Use Phase 1A cutout position
+
+front_right_display_window:
+  cutout_ref: front_right_display_window
+  type: fixed_window
+  frame:
+    enabled: true
+    color: "#FFFFFF"
+    width: 2.2                   # EXACT cutout width
+    height: 2.30                 # EXACT cutout height
+    thickness: 0.05
+    depth: 0.15
+  glass:
+    enabled: true
+    color: "#000000"
+    # Glass fills frame inner opening exactly (NO gap)
+    width: 2.1                   # Frame inner width
+    height: 2.2                  # Frame inner height
+    thickness: 0.01
+  position_ref: phase_1a_cutout
+
+# Alcove side windows (Phase 1A cutouts: 0.75m × 2.22m on angled walls)
+door_alcove_left_window:
+  cutout_ref: door_alcove_left_window
+  type: fixed_window
+  angled_wall: true              # Window on angled wall (requires rotation)
+  rotation_z_ref: phase_1a_cutout  # Match Phase 1A cutter rotation
+  frame:
+    enabled: true
+    color: "#FFFFFF"
+    width: 0.75                  # EXACT cutout width
+    height: 2.22                 # EXACT cutout height
+    thickness: 0.05
+    depth: 0.15
+  glass:
+    enabled: true
+    color: "#000000"
+    # Glass fills frame inner opening exactly (NO gap)
+    # Frame inner: (0.75 - 2×0.05) × (2.22 - 2×0.05) = 0.65 × 2.12
+    width: 0.65                  # Frame inner width
+    height: 2.12                 # Frame inner height
+    thickness: 0.01
+  position_ref: phase_1a_cutout
+
+door_alcove_right_window:
+  cutout_ref: door_alcove_right_window
+  type: fixed_window
+  angled_wall: true
+  rotation_z_ref: phase_1a_cutout
+  frame:
+    enabled: true
+    color: "#FFFFFF"
+    width: 0.75                  # EXACT cutout width
+    height: 2.22                 # EXACT cutout height
+    thickness: 0.05
+    depth: 0.15
+  glass:
+    enabled: true
+    color: "#000000"
+    # Glass fills frame inner opening exactly (NO gap)
+    width: 0.65                  # Frame inner width
+    height: 2.12                 # Frame inner height
+    thickness: 0.01
+  position_ref: phase_1a_cutout
+
+# Front entry door (Phase 1A cutout: 1.4m × 2.67m, alcove back wall)
+front_entry_door:
+  cutout_ref: front_entry_door
+  type: double_french_door       # Double door with panels
+  frame:
+    enabled: true
+    color: "#8B4513"             # Brown
+    width: 1.4                   # EXACT cutout width
+    height: 2.67                 # EXACT cutout height
+    thickness: 0.08
+    depth: 0.15
+  door_panels:
+    enabled: true
+    color: "#1A1A1A"             # Very dark gray
+    count: 2                     # Two panels (double door)
+    # Door frame is 3-SIDED (left, right, top - NO bottom piece)
+    # Frame inner width: (1.4 - 2×0.08) = 1.24
+    # Frame inner height: (2.67 - 0.08) = 2.59 (only subtract top, no bottom)
+    # Split width for two panels: 1.24 / 2 = 0.62 per panel
+    panel_width: 0.62            # Half of frame inner width
+    panel_height: 2.59           # Frame inner height (ground to top frame inner)
+    panel_thickness: 0.04
+    center_gap: 0                # NO gap between panels
+  position_ref: phase_1a_cutout
+
+# Rear service door (Phase 1A cutout: 1.0m × 2.1m, rear wall)
+rear_service_door:
+  cutout_ref: rear_service_door
+  type: single_door
+  frame:
+    enabled: true
+    color: "#8B4513"
+    width: 1.0                   # EXACT cutout width
+    height: 2.1                  # EXACT cutout height
+    thickness: 0.08
+    depth: 0.15
+  door_panel:
+    enabled: true
+    color: "#1A1A1A"
+    # Door frame is 3-SIDED (left, right, top - NO bottom piece)
+    # Frame inner width: (1.0 - 2×0.08) = 0.84
+    # Frame inner height: (2.1 - 0.08) = 2.02 (only subtract top, no bottom)
+    width: 0.84                  # Frame inner width
+    height: 2.02                 # Frame inner height (ground to top frame inner)
+    thickness: 0.04
+  position_ref: phase_1a_cutout
+
+# Validation requirements
+validation:
+  phase_1a_preservation:
+    check_vertex_count: true     # Phase 1A vertex count must match exactly
+    check_face_count: true       # Phase 1A face count must match exactly
+    tolerance: 0                 # No changes allowed
+
+  geometry_quality:
+    manifold_check: true
+    no_overlapping_faces: true
+    normal_consistency: true
+
+  positioning:
+    all_within_cutouts: true     # All Phase 1B geometry must fit within Phase 1A cutouts
+    no_z_fighting: true          # Minimum 1mm clearance from cutout edges
+
+# Export settings
+export:
+  format: glb
+  naming: "building_phase_1b_iter_{iteration:03d}.glb"
+  output_dir: "exports/glb"
+
+  threejs_validation:
+    required: true
+    checks:
+      - geometry_loads
+      - materials_display
+      - no_console_errors
+
+notes: |
+  Phase 1B adds window and door geometry to fill the cutouts created in Phase 1A.
+
+  CRITICAL: Phase 1A base structure is FROZEN. No modifications to:
+    - Walls (front, rear, left, right, alcove)
+    - Roof
+    - Foundation
+    - Parapet
+    - Canopy
+    - Chimney
+
+  All Phase 1B geometry must fit WITHIN Phase 1A cutouts.
+  Validation will verify Phase 1A vertex/face counts remain unchanged.
