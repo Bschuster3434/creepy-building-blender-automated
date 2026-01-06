@@ -38,6 +38,27 @@ standards:
     thickness: 0.04              # 4cm door panel thickness
     inset_from_frame: 0          # NO GAP - panel fills frame inner opening exactly
 
+# Detail standards (window/door depth, trim, sills)
+detail_standards:
+  window_detail:
+    outer_trim_sides_width: 0.08     # 8cm side trim (2× original)
+    outer_trim_top_width: 0.12       # 12cm top trim (3× original)
+    outer_trim_bottom_width: 0.12    # 12cm bottom trim (3× original)
+    outer_trim_depth: 0.02           # 2cm projection from brick
+    frame_recess: 0.08               # 8cm frame setback from outer trim
+    frame_profile_width: 0.06        # 6cm frame face width
+    glass_setback: 0.02              # 2cm glass setback from frame face
+    sill_overhang: 0.08              # 8cm sill overhang on sides (2× original)
+    sill_projection: 0.12            # 12cm sill forward projection (3× original)
+    sill_height: 0.08                # 8cm sill thickness (much thicker)
+
+  door_detail:
+    outer_trim_width: 0.05       # 5cm trim (slightly larger for doors)
+    outer_trim_depth: 0.02       # 2cm projection
+    frame_recess: 0.10           # 10cm frame setback (deeper for doors)
+    frame_profile_width: 0.08    # 8cm frame face width
+    panel_setback: 0.03          # 3cm panel setback from frame face
+
 # Front display windows (Phase 1A cutouts: 2.2m × 2.30m)
 front_left_display_window:
   cutout_ref: front_left_display_window  # References Phase 1A cutout
@@ -59,6 +80,21 @@ front_left_display_window:
     height: 2.2                  # Frame inner height
     thickness: 0.01
   position_ref: phase_1a_cutout  # Use Phase 1A cutout position
+  detail:
+    outer_trim:
+      enabled: true
+      sides_width: 0.08          # 8cm side trim (2× thicker)
+      top_width: 0.12            # 12cm top trim (3× thicker)
+      bottom_enabled: false      # Bottom trim disabled (user removed)
+      bottom_width: 0.12         # 12cm bottom trim (not used)
+      depth: 0.02                # 2cm trim projection from brick
+    frame_recess: 0.08           # 8cm frame setback from outer trim
+    window_sill:
+      enabled: false             # Window sill disabled (user removed)
+      overhang: 0.08             # 8cm overhang beyond frame on each side
+      projection: 0.12           # 12cm sill forward projection (much larger)
+      height: 0.08               # 8cm sill thickness (much thicker)
+    glass_setback: 0.02          # 2cm glass setback from frame face
 
 front_right_display_window:
   cutout_ref: front_right_display_window
@@ -78,6 +114,21 @@ front_right_display_window:
     height: 2.2                  # Frame inner height
     thickness: 0.01
   position_ref: phase_1a_cutout
+  detail:
+    outer_trim:
+      enabled: true
+      sides_width: 0.08          # 8cm side trim (2× thicker)
+      top_width: 0.12            # 12cm top trim (3× thicker)
+      bottom_enabled: false      # Bottom trim disabled (user removed)
+      bottom_width: 0.12         # 12cm bottom trim (not used)
+      depth: 0.02                # 2cm trim projection from brick
+    frame_recess: 0.08           # 8cm frame setback from outer trim
+    window_sill:
+      enabled: false             # Window sill disabled (user removed)
+      overhang: 0.08             # 8cm overhang beyond frame on each side
+      projection: 0.12           # 12cm sill forward projection (much larger)
+      height: 0.08               # 8cm sill thickness (much thicker)
+    glass_setback: 0.02          # 2cm glass setback from frame face
 
 # Alcove side windows (Phase 1A cutouts: 0.75m × 2.22m on angled walls)
 door_alcove_left_window:

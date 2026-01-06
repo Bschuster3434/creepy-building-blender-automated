@@ -234,6 +234,188 @@ def create_door_panel(name, width, height, thickness, location, color="#1A1A1A")
     return panel
 
 
+def create_outer_trim(name, cutout_width, cutout_height, trim_width_sides, trim_width_top, trim_width_bottom, trim_depth,
+                     center_location, rotation_z=0, color="#FFFFFF"):
+    """
+    Create outer trim around brick opening with different widths for each side.
+
+    Args:
+        name (str): Trim object base name
+        cutout_width (float): Width of brick cutout opening
+        cutout_height (float): Height of brick cutout opening
+        trim_width_sides (float): Width of left/right side trim (e.g., 0.08m)
+        trim_width_top (float): Width of top trim (e.g., 0.12m)
+        trim_width_bottom (float): Width of bottom trim (e.g., 0.12m)
+        trim_depth (float): Depth of trim (projection from brick)
+        center_location (tuple): (x, y, z) center position of opening
+        rotation_z (float): Rotation around Z axis in radians
+        color (str): Hex color code
+
+    Returns:
+        list: List of 4 trim pieces [top, bottom, left, right]
+    """
+    import math
+
+    trim_pieces = []
+    half_w = cutout_width / 2
+    half_h = cutout_height / 2
+
+    # Calculate local offsets (before rotation)
+    offsets = {
+        'top': (0, 0, half_h + trim_width_top/2),
+        'bottom': (0, 0, -half_h - trim_width_bottom/2),
+        'left': (-half_w - trim_width_sides/2, 0, 0),
+        'right': (half_w + trim_width_sides/2, 0, 0)
+    }
+
+    # If rotated, calculate world positions after rotation
+    if rotation_z != 0:
+        cos_r = math.cos(rotation_z)
+        sin_r = math.sin(rotation_z)
+
+    pieces_data = [
+        ('Top', cutout_width + 2*trim_width_sides, trim_depth, trim_width_top, offsets['top']),
+        ('Bottom', cutout_width + 2*trim_width_sides, trim_depth, trim_width_bottom, offsets['bottom']),
+        ('Left', trim_width_sides, trim_depth, cutout_height, offsets['left']),
+        ('Right', trim_width_sides, trim_depth, cutout_height, offsets['right'])
+    ]
+
+    for piece_name, w, d, h, offset in pieces_data:
+        # Rotate offset around Z axis if needed
+        if rotation_z != 0:
+            rotated_x = offset[0] * cos_r - offset[1] * sin_r
+            rotated_y = offset[0] * sin_r + offset[1] * cos_r
+            world_loc = (
+                center_location[0] + rotated_x,
+                center_location[1] + rotated_y,
+                center_location[2] + offset[2]
+            )
+        else:
+            world_loc = (
+                center_location[0] + offset[0],
+                center_location[1] + offset[1],
+                center_location[2] + offset[2]
+            )
+
+        piece = create_box_helper(
+            f"{name}_OuterTrim_{piece_name}",
+            width=w,
+            depth=d,
+            height=h,
+            location=world_loc
+        )
+
+        # Apply rotation around piece's own center
+        if rotation_z != 0:
+            piece.rotation_euler[2] = rotation_z
+
+        trim_pieces.append(piece)
+
+    # Apply material
+    for piece in trim_pieces:
+        apply_material_helper(piece, color, f"{name}_Trim_Mat")
+
+    return trim_pieces
+
+
+def create_window_sill(name, width, depth, height, center_location,
+                      rotation_z=0, color="#FFFFFF"):
+    """
+    Create window sill at bottom of window.
+
+    Args:
+        name (str): Sill object name
+        width (float): Sill width (cutout width + 2×overhang)
+        depth (float): Sill depth (projects forward from wall)
+        height (float): Sill thickness/height (e.g., 0.03m)
+        center_location (tuple): (x, y, z) center position
+        rotation_z (float): Rotation around Z axis in radians
+        color (str): Hex color code
+
+    Returns:
+        bpy.types.Object: Sill object
+    """
+    sill = create_box_helper(
+        name,
+        width=width,
+        depth=depth,
+        height=height,
+        location=center_location
+    )
+
+    # Apply rotation if specified
+    if rotation_z != 0:
+        sill.rotation_euler[2] = rotation_z
+
+    apply_material_helper(sill, color, f"{name}_Mat")
+
+    return sill
+
+
+def create_door_threshold(name, width, depth, height, center_location,
+                         rotation_z=0, color="#8B4513"):
+    """
+    Create door threshold at bottom of door frame.
+
+    Args:
+        name (str): Threshold object name
+        width (float): Threshold width (matches door width)
+        depth (float): Threshold depth
+        height (float): Threshold height (e.g., 0.02m)
+        center_location (tuple): (x, y, z) center position
+        rotation_z (float): Rotation around Z axis in radians
+        color (str): Hex color code
+
+    Returns:
+        bpy.types.Object: Threshold object
+    """
+    threshold = create_box_helper(
+        name,
+        width=width,
+        depth=depth,
+        height=height,
+        location=center_location
+    )
+
+    # Apply rotation if specified
+    if rotation_z != 0:
+        threshold.rotation_euler[2] = rotation_z
+
+    apply_material_helper(threshold, color, f"{name}_Mat")
+
+    return threshold
+
+
+def reposition_frame_pieces(frame_pieces, y_offset):
+    """
+    Move existing frame pieces back/forward by y_offset.
+
+    Creates reveal between outer trim and window/door frame.
+
+    Args:
+        frame_pieces (list): List of frame piece objects
+        y_offset (float): Distance to move in Y direction (negative = into wall)
+    """
+    for piece in frame_pieces:
+        piece.location.y += y_offset
+
+
+def reposition_glass_or_panel(objects, y_offset):
+    """
+    Move glass or door panels back by y_offset.
+
+    Args:
+        objects (list or bpy.types.Object): Glass/panel object(s)
+        y_offset (float): Distance to move in Y direction (negative = into wall)
+    """
+    # Handle both single object and list
+    if not isinstance(objects, list):
+        objects = [objects]
+
+    for obj in objects:
+        obj.location.y += y_offset
+
+
 # Helper functions (wrappers around blender_helpers.py functions)
 def create_box_helper(name, width, depth, height, location):
     """Create box using blender_helpers.create_box"""

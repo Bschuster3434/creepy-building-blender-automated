@@ -26,7 +26,12 @@ from phase_1b_helpers import (
     create_window_frame,
     create_window_glass,
     create_door_frame,
-    create_door_panel
+    create_door_panel,
+    create_outer_trim,
+    create_window_sill,
+    create_door_threshold,
+    reposition_frame_pieces,
+    reposition_glass_or_panel
 )
 
 # ============================================================================
@@ -147,6 +152,125 @@ phase_1b_objects.append(glass)
 print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m")
 print(f"  ✓ Glass: {window_spec['glass']['width']}m × {window_spec['glass']['height']}m")
 
+# Add detail if specified
+detail_spec = window_spec.get('detail')
+if detail_spec:
+    print("  [Detail Enhancement]")
+
+    # Outer trim around brick opening
+    if detail_spec.get('outer_trim', {}).get('enabled'):
+        trim_sides = detail_spec['outer_trim']['sides_width']
+        trim_top = detail_spec['outer_trim']['top_width']
+        trim_bottom = detail_spec['outer_trim']['bottom_width']
+        trim_bottom_enabled = detail_spec['outer_trim'].get('bottom_enabled', True)  # Default to enabled
+        trim_depth = detail_spec['outer_trim']['depth']
+
+        # Outer trim sits at brick face edge (y = -7.5 + small offset forward)
+        trim_y = cutout_spec['position']['y'] + 0.01
+        trim_center = (
+            cutout_spec['position']['x'],
+            trim_y,
+            cutout_spec['position']['z'] + window_spec['frame']['height']/2
+        )
+
+        # Create outer trim (3 or 4 pieces depending on bottom_enabled)
+        from phase_1b_helpers import create_box_helper, apply_material_helper
+        import math
+
+        trim_pieces = []
+        half_w = window_spec['frame']['width'] / 2
+        half_h = window_spec['frame']['height'] / 2
+
+        # Top trim
+        top_piece = create_box_helper(
+            "Front_Left_Window_OuterTrim_Top",
+            width=window_spec['frame']['width'] + 2*trim_sides,
+            depth=trim_depth,
+            height=trim_top,
+            location=(trim_center[0], trim_center[1], trim_center[2] + half_h + trim_top/2)
+        )
+        apply_material_helper(top_piece, window_spec['frame']['color'], "Front_Left_Window_Trim_Mat")
+        trim_pieces.append(top_piece)
+
+        # Bottom trim (only if enabled)
+        if trim_bottom_enabled:
+            bottom_piece = create_box_helper(
+                "Front_Left_Window_OuterTrim_Bottom",
+                width=window_spec['frame']['width'] + 2*trim_sides,
+                depth=trim_depth,
+                height=trim_bottom,
+                location=(trim_center[0], trim_center[1], trim_center[2] - half_h - trim_bottom/2)
+            )
+            apply_material_helper(bottom_piece, window_spec['frame']['color'], "Front_Left_Window_Trim_Mat")
+            trim_pieces.append(bottom_piece)
+
+        # Left trim
+        left_piece = create_box_helper(
+            "Front_Left_Window_OuterTrim_Left",
+            width=trim_sides,
+            depth=trim_depth,
+            height=window_spec['frame']['height'],
+            location=(trim_center[0] - half_w - trim_sides/2, trim_center[1], trim_center[2])
+        )
+        apply_material_helper(left_piece, window_spec['frame']['color'], "Front_Left_Window_Trim_Mat")
+        trim_pieces.append(left_piece)
+
+        # Right trim
+        right_piece = create_box_helper(
+            "Front_Left_Window_OuterTrim_Right",
+            width=trim_sides,
+            depth=trim_depth,
+            height=window_spec['frame']['height'],
+            location=(trim_center[0] + half_w + trim_sides/2, trim_center[1], trim_center[2])
+        )
+        apply_material_helper(right_piece, window_spec['frame']['color'], "Front_Left_Window_Trim_Mat")
+        trim_pieces.append(right_piece)
+
+        phase_1b_objects.extend(trim_pieces)
+
+        bottom_status = "enabled" if trim_bottom_enabled else "disabled"
+        print(f"    ✓ Outer trim: sides {trim_sides}m, top {trim_top}m, bottom {bottom_status}, depth {trim_depth}m")
+
+    # Reposition frame pieces back by recess
+    frame_recess = detail_spec.get('frame_recess', 0)
+    if frame_recess > 0:
+        reposition_frame_pieces(frame, -frame_recess)
+        print(f"    ✓ Frame recessed: {frame_recess}m into wall")
+
+    # Window sill at bottom
+    if detail_spec.get('window_sill', {}).get('enabled'):
+        sill_spec = detail_spec['window_sill']
+        sill_overhang = sill_spec['overhang']
+        sill_projection = sill_spec['projection']
+        sill_height = sill_spec['height']
+
+        # Sill width = cutout width + 2×overhang
+        sill_width = window_spec['frame']['width'] + 2 * sill_overhang
+
+        # Sill projects forward from outer trim
+        sill_y = cutout_spec['position']['y'] + 0.01 + sill_projection
+
+        # Sill at bottom of window (cutout position is at bottom)
+        sill_z = cutout_spec['position']['z'] + sill_height/2
+
+        sill = create_window_sill(
+            "Front_Left_Window_Sill",
+            width=sill_width,
+            depth=sill_projection + 0.06,  # Sill depth (forward projection + trim overlap)
+            height=sill_height,
+            center_location=(cutout_spec['position']['x'], sill_y, sill_z),
+            color=window_spec['frame']['color']
+        )
+        phase_1b_objects.append(sill)
+        print(f"    ✓ Window sill: {sill_width}m wide × {sill_height}m thick, projects {sill_projection}m")
+
+    # Reposition glass back by recess + setback
+    glass_setback = detail_spec.get('glass_setback', 0)
+    total_glass_offset = -(frame_recess + glass_setback)
+    if total_glass_offset != 0:
+        reposition_glass_or_panel(glass, total_glass_offset)
+        print(f"    ✓ Glass recessed: {-total_glass_offset}m from outer trim")
+
 # Front right display window
 print("\n[2.2] Front Right Display Window...")
 cutout_spec = phase_1a_spec['cutouts']['front_right_display_window']
@@ -174,6 +298,118 @@ glass = create_window_glass(
 phase_1b_objects.append(glass)
 print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m")
 print(f"  ✓ Glass: {window_spec['glass']['width']}m × {window_spec['glass']['height']}m")
+
+# Add detail if specified
+detail_spec = window_spec.get('detail')
+if detail_spec:
+    print("  [Detail Enhancement]")
+
+    # Outer trim around brick opening
+    if detail_spec.get('outer_trim', {}).get('enabled'):
+        trim_sides = detail_spec['outer_trim']['sides_width']
+        trim_top = detail_spec['outer_trim']['top_width']
+        trim_bottom = detail_spec['outer_trim']['bottom_width']
+        trim_bottom_enabled = detail_spec['outer_trim'].get('bottom_enabled', True)
+        trim_depth = detail_spec['outer_trim']['depth']
+
+        trim_y = cutout_spec['position']['y'] + 0.01
+        trim_center = (
+            cutout_spec['position']['x'],
+            trim_y,
+            cutout_spec['position']['z'] + window_spec['frame']['height']/2
+        )
+
+        from phase_1b_helpers import create_box_helper, apply_material_helper
+        import math
+
+        trim_pieces = []
+        half_w = window_spec['frame']['width'] / 2
+        half_h = window_spec['frame']['height'] / 2
+
+        # Top trim
+        top_piece = create_box_helper(
+            "Front_Right_Window_OuterTrim_Top",
+            width=window_spec['frame']['width'] + 2*trim_sides,
+            depth=trim_depth,
+            height=trim_top,
+            location=(trim_center[0], trim_center[1], trim_center[2] + half_h + trim_top/2)
+        )
+        apply_material_helper(top_piece, window_spec['frame']['color'], "Front_Right_Window_Trim_Mat")
+        trim_pieces.append(top_piece)
+
+        # Bottom trim (only if enabled)
+        if trim_bottom_enabled:
+            bottom_piece = create_box_helper(
+                "Front_Right_Window_OuterTrim_Bottom",
+                width=window_spec['frame']['width'] + 2*trim_sides,
+                depth=trim_depth,
+                height=trim_bottom,
+                location=(trim_center[0], trim_center[1], trim_center[2] - half_h - trim_bottom/2)
+            )
+            apply_material_helper(bottom_piece, window_spec['frame']['color'], "Front_Right_Window_Trim_Mat")
+            trim_pieces.append(bottom_piece)
+
+        # Left trim
+        left_piece = create_box_helper(
+            "Front_Right_Window_OuterTrim_Left",
+            width=trim_sides,
+            depth=trim_depth,
+            height=window_spec['frame']['height'],
+            location=(trim_center[0] - half_w - trim_sides/2, trim_center[1], trim_center[2])
+        )
+        apply_material_helper(left_piece, window_spec['frame']['color'], "Front_Right_Window_Trim_Mat")
+        trim_pieces.append(left_piece)
+
+        # Right trim
+        right_piece = create_box_helper(
+            "Front_Right_Window_OuterTrim_Right",
+            width=trim_sides,
+            depth=trim_depth,
+            height=window_spec['frame']['height'],
+            location=(trim_center[0] + half_w + trim_sides/2, trim_center[1], trim_center[2])
+        )
+        apply_material_helper(right_piece, window_spec['frame']['color'], "Front_Right_Window_Trim_Mat")
+        trim_pieces.append(right_piece)
+
+        phase_1b_objects.extend(trim_pieces)
+
+        bottom_status = "enabled" if trim_bottom_enabled else "disabled"
+        print(f"    ✓ Outer trim: sides {trim_sides}m, top {trim_top}m, bottom {bottom_status}, depth {trim_depth}m")
+
+    # Reposition frame pieces back by recess
+    frame_recess = detail_spec.get('frame_recess', 0)
+    if frame_recess > 0:
+        reposition_frame_pieces(frame, -frame_recess)
+        print(f"    ✓ Frame recessed: {frame_recess}m into wall")
+
+    # Window sill at bottom (if enabled)
+    if detail_spec.get('window_sill', {}).get('enabled'):
+        sill_spec = detail_spec['window_sill']
+        sill_overhang = sill_spec['overhang']
+        sill_projection = sill_spec['projection']
+        sill_height = sill_spec['height']
+
+        sill_width = window_spec['frame']['width'] + 2 * sill_overhang
+        sill_y = cutout_spec['position']['y'] + 0.01 + sill_projection
+        sill_z = cutout_spec['position']['z'] + sill_height/2
+
+        sill = create_window_sill(
+            "Front_Right_Window_Sill",
+            width=sill_width,
+            depth=sill_projection + 0.06,
+            height=sill_height,
+            center_location=(cutout_spec['position']['x'], sill_y, sill_z),
+            color=window_spec['frame']['color']
+        )
+        phase_1b_objects.append(sill)
+        print(f"    ✓ Window sill: {sill_width}m wide × {sill_height}m thick, projects {sill_projection}m")
+
+    # Reposition glass back by recess + setback
+    glass_setback = detail_spec.get('glass_setback', 0)
+    total_glass_offset = -(frame_recess + glass_setback)
+    if total_glass_offset != 0:
+        reposition_glass_or_panel(glass, total_glass_offset)
+        print(f"    ✓ Glass recessed: {-total_glass_offset}m from outer trim")
 
 # Alcove left window (angled wall)
 print("\n[2.3] Alcove Left Window (angled)...")
