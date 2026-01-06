@@ -1,0 +1,25 @@
+{
+  "checkpoint": "automated_verification_005",
+  "timestamp": "2026-01-04T09:42:07.054104",
+  "data": {
+    "issues": {
+      "critical": [],
+      "major": [],
+      "minor": [
+        "overall_width",
+        "overall_depth"
+      ],
+      "passed": [
+        "wall_height",
+        "canopy_width",
+        "canopy_depth",
+        "canopy_post_count",
+        "chimney_total_height"
+      ]
+    },
+    "critical_count": 0,
+    "major_count": 0,
+    "minor_count": 2,
+    "passed_count": 5
+  }
+}

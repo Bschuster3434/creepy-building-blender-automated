@@ -1,0 +1,258 @@
+{
+  "checkpoint": "inline_verification_032",
+  "timestamp": "2026-01-04T21:27:30.023368",
+  "data": {
+    "passed": true,
+    "results": {
+      "Foundation": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 8.5,
+          "depth": 15.0,
+          "height": 0.2800000011920929
+        },
+        "expected": {
+          "width": 8.5,
+          "depth": 15.0,
+          "height": 0.28
+        },
+        "error_pct": {
+          "width": 0.0,
+          "depth": 0.0,
+          "height": 4.257474531651642e-07
+        }
+      },
+      "Wall_Front": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 8.5,
+          "depth": 0.18000000715255737,
+          "height": 3.75
+        },
+        "expected": {
+          "width": 8.5,
+          "depth": 0.18,
+          "height": 3.75
+        },
+        "error_pct": {
+          "width": 0.0,
+          "depth": 3.973642988726786e-06,
+          "height": 0.0
+        }
+      },
+      "Wall_Rear": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 8.5,
+          "depth": 0.18000000715255737,
+          "height": 3.75
+        },
+        "expected": {
+          "width": 8.5,
+          "depth": 0.18,
+          "height": 3.75
+        },
+        "error_pct": {
+          "width": 0.0,
+          "depth": 3.973642988726786e-06,
+          "height": 0.0
+        }
+      },
+      "Wall_Left": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 0.18000000715255737,
+          "depth": 15.0,
+          "height": 3.75
+        },
+        "expected": {
+          "width": 0.18,
+          "depth": 15.0,
+          "height": 3.75
+        },
+        "error_pct": {
+          "width": 3.973642988726786e-06,
+          "depth": 0.0,
+          "height": 0.0
+        }
+      },
+      "Wall_Right": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 0.18000000715255737,
+          "depth": 15.0,
+          "height": 3.75
+        },
+        "expected": {
+          "width": 0.18,
+          "depth": 15.0,
+          "height": 3.75
+        },
+        "error_pct": {
+          "width": 3.973642988726786e-06,
+          "depth": 0.0,
+          "height": 0.0
+        }
+      },
+      "Roof": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 8.5,
+          "depth": 15.0,
+          "height": 0.20000000298023224
+        },
+        "expected": {
+          "width": 8.5,
+          "depth": 15.0,
+          "height": 0.2
+        },
+        "error_pct": {
+          "width": 0.0,
+          "depth": 0.0,
+          "height": 1.4901161138336505e-06
+        }
+      },
+      "Canopy_Roof": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 8.5,
+          "depth": 2.5,
+          "height": 0.3499999940395355
+        },
+        "expected": {
+          "width": 8.5,
+          "depth": 2.5,
+          "height": 0.35
+        },
+        "error_pct": {
+          "width": 0.0,
+          "depth": 0.0,
+          "height": 1.7029898443813148e-06
+        }
+      },
+      "Chimney": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 0.800000011920929,
+          "depth": 0.800000011920929,
+          "height": 1.5
+        },
+        "expected": {
+          "width": 0.8,
+          "depth": 0.8,
+          "height": 1.5
+        },
+        "error_pct": {
+          "width": 1.4901161138336505e-06,
+          "depth": 1.4901161138336505e-06,
+          "height": 0.0
+        }
+      },
+      "Parapet_Left_Front": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 0.18000000715255737,
+          "depth": 5.0,
+          "height": 1.0499999523162842
+        },
+        "expected": {
+          "width": 0.18,
+          "depth": 5.0,
+          "height": 1.05
+        },
+        "error_pct": {
+          "width": 3.973642988726786e-06,
+          "depth": 0.0,
+          "height": 4.5413062728306114e-06
+        }
+      },
+      "Parapet_Right_Front": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 0.18000000715255737,
+          "depth": 5.0,
+          "height": 1.0499999523162842
+        },
+        "expected": {
+          "width": 0.18,
+          "depth": 5.0,
+          "height": 1.05
+        },
+        "error_pct": {
+          "width": 3.973642988726786e-06,
+          "depth": 0.0,
+          "height": 4.5413062728306114e-06
+        }
+      },
+      "Parapet_Front": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 8.5,
+          "depth": 0.18000000715255737,
+          "height": 1.0499999523162842
+        },
+        "expected": {
+          "width": 8.5,
+          "depth": 0.18,
+          "height": 1.05
+        },
+        "error_pct": {
+          "width": 0.0,
+          "depth": 3.973642988726786e-06,
+          "height": 4.5413062728306114e-06
+        }
+      },
+      "Parapet_Left_Middle": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 0.18000000715255737,
+          "depth": 5.0,
+          "height": 0.44999998807907104
+        },
+        "expected": {
+          "width": 0.18,
+          "depth": 5.0,
+          "height": 0.45
+        },
+        "error_pct": {
+          "width": 3.973642988726786e-06,
+          "depth": 0.0,
+          "height": 2.649095325817857e-06
+        }
+      },
+      "Parapet_Right_Middle": {
+        "passed": true,
+        "errors": [],
+        "actual": {
+          "width": 0.18000000715255737,
+          "depth": 5.0,
+          "height": 0.44999998807907104
+        },
+        "expected": {
+          "width": 0.18,
+          "depth": 5.0,
+          "height": 0.45
+        },
+        "error_pct": {
+          "width": 3.973642988726786e-06,
+          "depth": 0.0,
+          "height": 2.649095325817857e-06
+        }
+      }
+    },
+    "critical_failures": [],
+    "major_failures": []
+  }
+}

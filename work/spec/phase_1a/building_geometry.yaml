@@ -54,6 +54,8 @@ roof:
   type: flat
   thickness: 0.20           # Built-up roofing structure
   elevation: 3.75           # Bottom of roof at wall height
+  width: 8.68               # Extends to outer wall faces (8.5 + 0.18 wall thickness)
+  depth: 15.18              # Extends to outer wall faces (15.0 + 0.18 wall thickness)
 
 # Simple rectangular footprint
 footprint_geometry:
@@ -72,7 +74,7 @@ door_alcove:
   front_opening: 2.5        # Width at facade (6 inches from display windows)
   back_opening: 1.6         # Width at door (double door width)
   depth: 1.0                # How far back the alcove goes
-  height: 2.85              # Alcove height (extends to bottom of canopy)
+  height: 2.75              # Alcove height (6 inches above window tops at 2.60m)
   position:
     x: 0.0                  # Centered on front facade
     y_front: -7.5           # Front wall position (facade)
@@ -92,11 +94,37 @@ door_alcove:
       back_x: 0.8           # Right edge at door (1.6m door / 2)
       angle_inward: true
     back:
-      # Back wall of alcove (where double doors are located)
+      # Back wall of alcove at back of recess (where door cutout is applied)
       enabled: true
-      width: 1.8            # Slightly wider than double doors for framing
-      height: 2.85          # Alcove height (extends to bottom of canopy)
-      position_y: -6.5      # Back of alcove
+      width: 1.78           # Aligns with outer edges of alcove side walls at back (±0.89)
+      height: 2.75          # Alcove height (6 inches above window tops)
+      position_y: -6.5      # Back of alcove (1.0m from facade)
+      notes: "Back wall extends to outer edges of left/right alcove walls at back, door cutout applied here"
+
+  ceiling:
+    # Trapezoidal ceiling covering the top of the alcove
+    enabled: true
+    thickness: 0.15         # Ceiling thickness
+    elevation: 2.75         # Bottom of ceiling (6 inches above window tops at 2.60m)
+    shape: trapezoid        # Matches alcove footprint
+    front_width: 2.68       # Width at front (aligns with outer wall edges at facade)
+    back_width: 1.78        # Width at back (aligns with outer wall edges at back)
+    depth: 0.91             # From y=-7.5 to y=-6.59 (front face of back wall)
+    y_front: -7.5           # Front edge position (at facade)
+    y_back: -6.59           # Back edge position (front face of back wall, where side walls end)
+    notes: "Trapezoidal ceiling piece covering the top of the alcove interior. Aligns with outer wall edges (exterior side) from facade to front face of back wall."
+
+  header_bar:
+    # Horizontal bar/lintel across top of alcove opening at facade
+    enabled: true
+    width: 2.5              # Spans alcove opening width
+    height: 0.1524          # 6 inches high
+    depth: 0.18             # Same as wall thickness
+    position:
+      x: 0.0                # Centered
+      y: -7.5               # At front facade (inside of alcove opening)
+      z: 2.75               # Top of bar at alcove ceiling height
+    notes: "Horizontal header/lintel bar across top of alcove entrance, creates edge/frame effect"
 
   notes: "Angled alcove walls create funnel/trapezoid shape - wide opening at facade (2.5m) narrows to double door width (1.6m). Alcove extends from ground to bottom of canopy (2.85m). Depth 1.0m."
 
@@ -105,7 +133,7 @@ door_alcove:
 cutouts:
   front_alcove_opening:
     width: 2.5              # Wide opening at facade (alcove entrance, 6 inches from windows)
-    height: 2.85            # Extends to bottom of canopy
+    height: 2.75            # Alcove height (6 inches above window tops)
     wall: front
     position:
       x: 0.0                # Centered on front facade
@@ -113,11 +141,11 @@ cutouts:
       z: 0.0                # Ground level
     reveal_depth: 0.18      # Through front wall thickness
     type: rectangular_void
-    notes: "Large opening in front wall for alcove entrance (2.5m wide, extends to bottom of canopy at 2.85m)."
+    notes: "Large opening in front wall for alcove entrance (2.5m wide, alcove ceiling at 2.75m)."
 
   front_entry_door:
-    width: 1.6              # Double door width
-    height: 2.7             # Aligned with window tops (2.70m)
+    width: 1.4              # Double French door width (leaves 0.1m framing on each side)
+    height: 2.67            # Top at 2.67m (leaves 3" framing below alcove ceiling at 2.75m)
     wall: alcove_back
     position:
       x: 0.0                # Centered
@@ -125,11 +153,11 @@ cutouts:
       z: 0.0                # Ground level (sill height)
     reveal_depth: 0.18      # Through back wall thickness
     type: rectangular_void
-    notes: "Double door cutout at BACK of alcove (recessed 1.0m). Height aligned with window tops at 2.70m. Actual door geometry added in Phase 1B."
+    notes: "Double French door cutout at BACK of alcove (recessed 1.0m). Leaves framing around edges and at top."
 
   front_left_display_window:
     width: 2.2
-    height: 2.25  # Adjusted to ensure clearance to canopy
+    height: 2.30  # Top aligns with alcove ceiling at 2.75m (2.75 - 0.45 sill)
     wall: front
     position:
       x: -2.5               # Left of center door
@@ -137,11 +165,11 @@ cutouts:
       z: 0.45               # Sill height above ground (~1.5 feet)
     reveal_depth: 0.25      # Window reveal into wall thickness
     type: rectangular_void
-    notes: "Left storefront display window cutout. Actual window frame/glass added in Phase 1B."
+    notes: "Left storefront display window cutout. Top aligns with alcove ceiling. Actual window frame/glass added in Phase 1B."
 
   front_right_display_window:
     width: 2.2
-    height: 2.25  # Adjusted to ensure clearance to canopy
+    height: 2.30  # Top aligns with alcove ceiling at 2.75m (2.75 - 0.45 sill)
     wall: front
     position:
       x: 2.5                # Right of center door (mirror of left)
@@ -149,46 +177,58 @@ cutouts:
       z: 0.45               # Sill height above ground (~1.5 feet)
     reveal_depth: 0.25      # Window reveal into wall thickness
     type: rectangular_void
-    notes: "Right storefront display window cutout (mirror of left). Actual window frame/glass added in Phase 1B."
+    notes: "Right storefront display window cutout (mirror of left). Top aligns with alcove ceiling. Actual window frame/glass added in Phase 1B."
 
   door_alcove_left_window:
     width: 0.75             # Horizontal width - reduced to leave border on sides
-    height: 2.0             # Reduced slightly to leave visible top border
+    height: 2.22            # Top at 2.67m (leaves 3" framing below alcove ceiling at 2.75m)
     wall: alcove_left
     position:
       x: -0.95              # Left angled wall
       y: -7.0               # Centered in alcove depth (between -7.5 and -6.5)
-      z: 0.55               # Raised slightly to create bottom border/sill
+      z: 0.45               # Same sill height as front display windows
     reveal_depth: 0.6       # Reduced to leave border at front and back of wall
     type: rectangular_void
-    notes: "Left window on angled alcove wall - with border/frame on all sides like front windows."
+    notes: "Left window on angled alcove wall - tall window, top leaves 3\" framing below ceiling."
 
   door_alcove_right_window:
     width: 0.75             # Horizontal width - reduced to leave border on sides
-    height: 2.0             # Reduced slightly to leave visible top border
+    height: 2.22            # Top at 2.67m (leaves 3" framing below alcove ceiling at 2.75m)
     wall: alcove_right
     position:
       x: 0.95               # Right angled wall
       y: -7.0               # Centered in alcove depth (between -7.5 and -6.5)
-      z: 0.55               # Raised slightly to create bottom border/sill
+      z: 0.45               # Same sill height as front display windows
     reveal_depth: 0.6       # Reduced to leave border at front and back of wall
     type: rectangular_void
-    notes: "Right window on angled alcove wall - with border/frame on all sides like front windows (mirror of left)."
+    notes: "Right window on angled alcove wall - tall window, top leaves 3\" framing below ceiling (mirror of left)."
+
+  rear_service_door:
+    width: 1.0              # Standard single door width
+    height: 2.1             # Standard door height
+    wall: rear
+    position:
+      x: 0.0                # Centered on rear wall
+      y: 7.5                # Rear wall position (building_depth/2)
+      z: 0.0                # Ground level (sill height)
+    reveal_depth: 0.18      # Through rear wall thickness
+    type: rectangular_void
+    notes: "Standard back door, centered on rear wall."
 
 # Front canopy/awning structure - PERPENDICULAR orientation
 canopy:
   enabled: true
   width: 8.5                # Spans full front facade width (same as building)
   depth: 2.5                # Projects OUT from building toward street (perpendicular to facade)
-  height: 2.85              # Post height (bottom of canopy above ground)
-  height_clearance: 2.85    # Bottom of canopy above ground
+  height: 3.40              # Post height (bottom of canopy above ground, lowered 6 inches)
+  height_clearance: 3.40    # Bottom of canopy above ground
   roof_thickness: 0.35      # Structural depth of canopy
   thickness: 0.35           # Structural depth of canopy (legacy)
   orientation: perpendicular  # Extends OUT from facade toward street
   position:
     x: 0.0                  # Centered on building
     y: -2.5                 # Projects forward from front wall (negative Y is toward viewer)
-    z_bottom: 2.85          # Bottom elevation above ground
+    z_bottom: 3.40          # Bottom elevation above ground (top at 3.75m)
 
   posts:
     # Posts positioned: outer posts at edges, center post for structural support
@@ -209,58 +249,76 @@ canopy:
   beam:
     height: 0.15            # I-beam depth
     width: 0.10             # I-beam width
-    position_z: 3.15        # Flush with canopy underside (2.85 + 0.35 - 0.05)
+    position_z: 3.70        # Flush with canopy underside (3.40 + 0.35 - 0.05)
     notes: "Horizontal beam connecting post tops, spans full width, I-beam or channel section"
 
-# Chimney/flue structure - SITS ON ROOF RIGHT BEHIND MIDDLE PARAPET, RIGHT SIDE
+# Chimney/flue structure - SITS ON ROOF AT BEGINNING OF THIRD PARAPET LEVEL, RIGHT SIDE
 chimney:
   enabled: true
-  width: 0.8
+  width: 0.5                # Narrower when viewed from front
   depth: 0.8
   base_elevation: 3.95      # Sits on roof surface (foundation 0.28 + wall 3.75 - 0.08 to account for roof sitting on wall)
-  height_above_roof: 1.5    # Extends above roof surface
-  total_height: 5.45        # From ground to chimney top (3.95 + 1.5)
+  height_above_roof: 1.5    # Extends above roof surface (body of chimney)
+  total_height: 5.75        # From ground to top of gabled roof (3.95 + 1.5 + 0.3)
   attachment: sits_on_roof
   position:
     x: 3.8                  # Right side (slightly inset from edge)
-    y: 3.0                  # Right behind middle parapet (middle ends at Y=2.5)
+    y: 0.61                 # 24 inches back from front edge of third parapet level (level 3 starts at y=0.0)
     z: 3.95                 # Sits on roof surface
-  notes: "Square profile chimney sits on roof right behind middle parapet, right side. Visible from side view."
+  gabled_roof:
+    enabled: true
+    height: 0.3             # Height of gabled top
+    ridge_direction: y      # Ridge runs front-to-back (Y axis)
+    style: gable            # Two triangular ends, two sloped rectangular sides
+  notes: "Rectangular chimney (narrower from front view) with gabled roof top. Located at beginning of third parapet level, right side."
   position_x: 3.8           # For template compatibility
-  position_y: 3.0
+  position_y: 0.61
   position_z: 3.95
 
-# Stepped parapet wall system - THREE LEVELS descending front to back
+# Stepped parapet wall system - FOUR LEVELS descending front to back (sides only)
+# Front facade parapet is flat and 3 inches taller than side parapets
 parapet:
   style: stepped_descending
   thickness: 0.18           # Same as main wall thickness (continuous wall)
 
+  # Front facade parapet (flat across front, taller than side parapets)
+  front_facade:
+    height: 1.1             # Above roof surface
+    total_elevation: 4.85   # 3.75 wall + 1.1 parapet
+
   stepped_configuration:
-    type: three_level_front_to_back
-    description: "Parapet descends in 3 distinct steps from front (tallest) to back (no parapet)"
+    type: four_level_front_to_back
+    description: "Side parapets descend in 4 distinct steps from front (tallest) to back (no parapet). Equal height steps: 1.05m → 0.70m → 0.35m → 0.0m"
 
-    # Front section (tallest)
-    front_height: 1.05      # Above roof surface
-    front_span: 5.0         # Covers front 5.0m of building depth
-    front_total_elevation: 4.8  # 3.75 wall + 1.05 parapet
+    # Level 1 - Front section (tallest side parapet)
+    level_1_height: 1.05        # Above roof surface
+    level_1_span: 3.75          # Covers front 3.75m of building depth (y=-7.5 to -3.75)
+    level_1_total_elevation: 4.80  # 3.75 wall + 1.05 parapet
 
-    # Middle section
-    middle_height: 0.45     # Above roof surface
-    middle_span: 5.0        # Covers middle 5.0m (from 5.0m to 10.0m)
-    middle_total_elevation: 4.2  # 3.75 wall + 0.45 parapet
-    step_down_1: 0.6        # Drop from front to middle
+    # Level 2 - Second section
+    level_2_height: 0.70        # Above roof surface
+    level_2_span: 3.75          # Covers next 3.75m (y=-3.75 to 0.0)
+    level_2_total_elevation: 4.45  # 3.75 wall + 0.70 parapet
+    step_down_1: 0.35           # Drop from level 1 to level 2
 
-    # Rear section (no parapet)
-    rear_height: 0.0        # No parapet at rear
-    rear_span: 5.0          # Covers rear 5.0m (from 10.0m to 15.0m)
-    rear_total_elevation: 3.75  # Wall height only, flat roof edge
-    step_down_2: 0.45       # Drop from middle to rear
+    # Level 3 - Third section
+    level_3_height: 0.35        # Above roof surface
+    level_3_span: 3.75          # Covers next 3.75m (y=0.0 to +3.75)
+    level_3_total_elevation: 4.10  # 3.75 wall + 0.35 parapet
+    step_down_2: 0.35           # Drop from level 2 to level 3
+
+    # Level 4 - Rear section (no parapet)
+    level_4_height: 0.0         # No parapet at rear
+    level_4_span: 3.75          # Covers rear 3.75m (y=+3.75 to +7.5)
+    level_4_total_elevation: 3.75  # Wall height only, flat roof edge
+    step_down_3: 0.35           # Drop from level 3 to level 4
 
     step_positions:
-      - at_depth: 5.0       # First step down at 5.0m from front
-      - at_depth: 10.0      # Second step down at 10.0m from front
+      - at_depth: 3.75      # First step down at 3.75m from front
+      - at_depth: 7.5       # Second step down at 7.5m from front
+      - at_depth: 11.25     # Third step down at 11.25m from front
 
-    notes: "Three-level stepped parapet creates distinctive profile when viewed from side. Front is tallest (1.05m), middle is medium (0.45m), rear has no parapet (0.0m). Creates stepped silhouette characteristic of mid-century commercial architecture."
+    notes: "Four-level stepped side parapets with equal 0.35m height steps. Front facade parapet is flat at 1.1m height."
 
   corners:
     style: plain_square
@@ -305,27 +363,31 @@ validation_targets:
   overall_width: 8.5
   overall_depth: 15.0
   wall_height: 3.75
-  parapet_height_front: 1.05   # Front parapet above roof (from baseline iteration 004)
-  parapet_height_middle: 0.45  # Middle parapet above roof (from baseline iteration 004)
-  parapet_height_rear: 0.0     # No rear parapet
-  total_height_front: 4.8      # Ground to top of front parapet (3.75 wall + 1.05 parapet)
-  total_height_middle: 4.2     # Ground to top of middle parapet (3.75 wall + 0.45 parapet)
-  total_height_rear: 3.75      # Ground to roof edge (no parapet)
+  parapet_height_front_facade: 1.1   # Front facade parapet above roof (flat)
+  parapet_height_side_level_1: 1.05  # Side parapet level 1 (frontmost)
+  parapet_height_side_level_2: 0.70  # Side parapet level 2
+  parapet_height_side_level_3: 0.35  # Side parapet level 3
+  parapet_height_side_level_4: 0.0   # Side parapet level 4 (rear, no parapet)
+  total_height_front_facade: 4.85    # Ground to top of front facade parapet (3.75 wall + 1.1 parapet)
+  total_height_side_level_1: 4.80    # Ground to top of side level 1 (3.75 wall + 1.05 parapet)
+  total_height_side_level_2: 4.45    # Ground to top of side level 2 (3.75 wall + 0.70 parapet)
+  total_height_side_level_3: 4.10    # Ground to top of side level 3 (3.75 wall + 0.35 parapet)
+  total_height_rear: 3.75            # Ground to roof edge (no parapet)
   front_door_width: 1.2
   front_door_height: 2.1
   front_door_recess: 1.4
   display_window_width: 2.2    # Updated from photo analysis
-  display_window_height: 2.25  # Adjusted to ensure clearance to canopy
+  display_window_height: 2.30  # Top aligns with alcove ceiling at 2.75m
   window_sill_height: 0.45     # Updated: ~1.5 feet
   canopy_width: 8.5
   canopy_depth: 2.5
   canopy_projection: 2.5
-  canopy_clearance: 2.85
+  canopy_clearance: 3.40       # Bottom of canopy (lowered by 6 inches)
   canopy_post_count: 3         # 3 posts: left, center (structural), right
-  chimney_total_height: 5.45   # Updated: sits on roof at 3.95 + 1.5 height
+  chimney_total_height: 5.75   # Updated: sits on roof at 3.95 + 1.5 body + 0.3 gabled roof
   chimney_position_x: 3.8      # Updated: right side
-  chimney_position_y: 3.0      # Updated: right behind middle parapet
+  chimney_position_y: 0.61     # Updated: 24 inches back from third parapet level
   foundation_exposed: 0.28
   canopy_beam_height: 0.15
   canopy_beam_width: 0.10
-  canopy_beam_position_z: 3.15
+  canopy_beam_position_z: 3.70 # Updated for lowered canopy height

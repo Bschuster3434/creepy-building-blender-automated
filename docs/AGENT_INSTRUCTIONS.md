@@ -11,6 +11,158 @@ This document defines how each agent should behave in each phase of the building
 
 ---
 
+## Direct Execution Mode (Claude Code Main Conversation)
+
+**When Claude Code executes Blender operations directly in the main conversation** (NOT via spawned agent), the following MANDATORY verification requirements apply.
+
+### Critical Difference from Agent Mode
+
+- Agent mode: Verification is built into the agent's workflow
+- **Direct execution mode: YOU must explicitly enforce verification steps**
+
+### Helper Library Requirements
+
+**ALWAYS use `scripts/blender_helpers.py` for geometry creation:**
+
+```python
+# Import at start of Blender code execution
+import sys
+sys.path.append('scripts')
+from blender_helpers import create_box, create_cylinder, verify_dimensions, create_boolean_cutter
+
+# Example: Create wall with automatic dimension verification
+wall = create_box("Wall_Front", width=8.5, depth=0.18, height=3.75, location=(0, -7.5, 1.875))
+result = verify_dimensions(wall, 8.5, 0.18, 3.75)
+if not result['passed']:
+    raise ValueError(f"Wall dimensions incorrect: {result['errors']}")
+```
+
+**WHY:** Prevents scaling math errors (e.g., dividing by 2 when creating primitives).
+
+### MANDATORY Verification Workflow
+
+After building geometry, **BEFORE exporting GLB or declaring success**, you MUST:
+
+**Step 1: Inline Dimension Verification**
+
+For EACH major structural element, verify dimensions immediately after creation:
+
+```python
+# After creating each element:
+from blender_helpers import verify_dimensions
+
+wall_result = verify_dimensions(
+    bpy.data.objects['Wall_Front'],
+    expected_width=8.5,
+    expected_depth=0.18,
+    expected_height=3.75,
+    tolerance=0.01  # 1cm tolerance
+)
+
+if not wall_result['passed']:
+    print(f"❌ CRITICAL: Wall_Front failed verification")
+    for error in wall_result['errors']:
+        print(f"   {error}")
+    # DO NOT CONTINUE - Fix the error first
+```
+
+**Step 2: Batch Verification**
+
+After building ALL elements, run batch verification:
+
+```python
+from blender_helpers import verify_all_objects
+
+specs = [
+    {'object': bpy.data.objects['Wall_Front'], 'width': 8.5, 'depth': 0.18, 'height': 3.75},
+    {'object': bpy.data.objects['Wall_Rear'], 'width': 8.5, 'depth': 0.18, 'height': 3.75},
+    {'object': bpy.data.objects['Wall_Left'], 'width': 0.18, 'depth': 15.0, 'height': 3.75},
+    {'object': bpy.data.objects['Wall_Right'], 'width': 0.18, 'depth': 15.0, 'height': 3.75},
+    {'object': bpy.data.objects['Roof'], 'width': 8.5, 'depth': 15.0, 'height': 0.20},
+    # ... add all major elements
+]
+
+results = verify_all_objects(specs, tolerance=0.01)
+
+if results['critical_failures']:
+    print(f"\n❌ CRITICAL FAILURES: {len(results['critical_failures'])}")
+    for obj_name in results['critical_failures']:
+        result = results['results'][obj_name]
+        print(f"\n{obj_name}:")
+        for error in result['errors']:
+            print(f"  {error}")
+    # STOP HERE - Do not export, do not declare success
+    raise ValueError("Critical dimensional errors detected - iteration FAILED")
+```
+
+**Step 3: Automated Verification Script** (Phase 1A only)
+
+After GLB export, run the automated verification:
+
+```python
+# Run verification script
+exec(open('scripts/verify_phase_1a.py').read())
+```
+
+This will print a detailed report and identify critical/major/minor issues.
+
+### Forbidden Actions UNTIL Verification Passes
+
+You MUST NOT:
+- ❌ Export GLB
+- ❌ Generate renders
+- ❌ Write metrics JSON
+- ❌ Declare iteration complete
+- ❌ Present results to user
+
+### If Verification Fails
+
+When verification fails (dimensional errors >10%):
+
+1. **Stop immediately** - do not continue to export/render
+2. **Identify root cause** - which line of code created incorrect geometry?
+3. **Fix the code** - correct the scaling/positioning error
+4. **Start new iteration** - increment iteration number
+5. **DO NOT present failed iteration to user** - user should only see passing iterations
+
+### TodoWrite Verification Gates
+
+Structure your todos with VERIFY: gates:
+
+```python
+todos = [
+    {"content": "Build base structure", "status": "completed", ...},
+    {"content": "Create Boolean cutouts", "status": "completed", ...},
+    {"content": "Apply placeholder colors", "status": "completed", ...},
+    # CRITICAL VERIFICATION GATES - CANNOT SKIP
+    {"content": "VERIFY: Check all dimensions vs spec", "status": "in_progress", ...},
+    {"content": "VERIFY: Check cutouts are actual holes", "status": "pending", ...},
+    {"content": "VERIFY: Run automated validation script", "status": "pending", ...},
+    # Only proceed after ALL VERIFY tasks pass:
+    {"content": "Export GLB", "status": "pending", ...},
+    {"content": "Generate renders", "status": "pending", ...},
+    {"content": "Write metrics", "status": "pending", ...}
+]
+```
+
+**Convention:** Any todo starting with `VERIFY:` is a mandatory quality gate.
+
+### Success Criteria for Direct Execution
+
+An iteration is ONLY complete when:
+
+✅ All major elements created with `blender_helpers.py` functions
+✅ Each element verified inline (dimensions within tolerance)
+✅ Batch verification passed (no critical failures)
+✅ Automated verification script passed (Phase 1A only)
+✅ GLB exports successfully
+✅ Renders generated
+✅ Metrics written with validation data
+
+**Then and ONLY then** can you present results to the user.
+
+---
+
 ## Phase 1A: Base Structure with Cutouts (GEOMETRY ONLY)
 
 **Spec File:** `work/spec/phase_1a/building_geometry.yaml`

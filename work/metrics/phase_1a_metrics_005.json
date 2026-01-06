@@ -1,0 +1,362 @@
+{
+  "iteration": "005",
+  "phase": "1a",
+  "timestamp": "2026-01-03T20:55:03.925688",
+  "spec_file": "work/spec/phase_1a/building_geometry.yaml",
+  "helper_library": "scripts/blender_helpers.py",
+  "outputs": {
+    "glb_file": "exports/glb/building_phase_1a_iter_005.glb",
+    "glb_size_kb": 49.6,
+    "renders": [
+      "work/renders/phase_1a_iter_005/front.png",
+      "work/renders/phase_1a_iter_005/left.png",
+      "work/renders/phase_1a_iter_005/right.png",
+      "work/renders/phase_1a_iter_005/rear.png",
+      "work/renders/phase_1a_iter_005/iso.png",
+      "work/renders/phase_1a_iter_005/top.png"
+    ]
+  },
+  "geometry": {
+    "objects": {
+      "Canopy_Beam": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          8.5,
+          0.10000038146972656,
+          0.15000009536743164
+        ]
+      },
+      "Canopy_Post_1": {
+        "vertices": 64,
+        "faces": 34,
+        "location": [
+          -3.0,
+          -10.0,
+          1.4249999523162842
+        ],
+        "dimensions": [
+          0.18000000715255737,
+          0.18000000715255737,
+          2.8499999046325684
+        ]
+      },
+      "Canopy_Post_2": {
+        "vertices": 64,
+        "faces": 34,
+        "location": [
+          0.0,
+          -10.0,
+          1.4249999523162842
+        ],
+        "dimensions": [
+          0.18000000715255737,
+          0.18000000715255737,
+          2.8499999046325684
+        ]
+      },
+      "Canopy_Post_3": {
+        "vertices": 64,
+        "faces": 34,
+        "location": [
+          3.0,
+          -10.0,
+          1.4249999523162842
+        ],
+        "dimensions": [
+          0.18000000715255737,
+          0.18000000715255737,
+          2.8499999046325684
+        ]
+      },
+      "Canopy_Roof": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          8.5,
+          2.5,
+          0.34999990463256836
+        ]
+      },
+      "Chimney": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          0.8000001907348633,
+          0.8000001907348633,
+          0.8999996185302734
+        ]
+      },
+      "Foundation": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          8.5,
+          15.0,
+          0.2800000011920929
+        ]
+      },
+      "Parapet_Front": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          8.5,
+          0.10000038146972656,
+          1.0500001907348633
+        ]
+      },
+      "Parapet_Left_Front": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          0.10000038146972656,
+          5.0,
+          1.0500001907348633
+        ]
+      },
+      "Parapet_Left_Middle": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          0.10000038146972656,
+          5.0,
+          0.4499998092651367
+        ]
+      },
+      "Parapet_Right_Front": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          0.10000038146972656,
+          5.0,
+          1.0500001907348633
+        ]
+      },
+      "Parapet_Right_Middle": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          0.10000038146972656,
+          5.0,
+          0.4499998092651367
+        ]
+      },
+      "Roof": {
+        "vertices": 8,
+        "faces": 6,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          8.5,
+          15.0,
+          0.19999980926513672
+        ]
+      },
+      "Wall_Front": {
+        "vertices": 33,
+        "faces": 22,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          8.5,
+          0.18000030517578125,
+          3.75
+        ]
+      },
+      "Wall_Left": {
+        "vertices": 16,
+        "faces": 12,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          0.18000030517578125,
+          15.0,
+          3.75
+        ]
+      },
+      "Wall_Rear": {
+        "vertices": 16,
+        "faces": 10,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          8.5,
+          0.18000030517578125,
+          3.75
+        ]
+      },
+      "Wall_Right": {
+        "vertices": 16,
+        "faces": 12,
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "dimensions": [
+          0.18000030517578125,
+          15.0,
+          3.75
+        ]
+      }
+    },
+    "total_vertices": 353,
+    "total_faces": 218
+  },
+  "validation": {
+    "dimensions": {
+      "foundation": {
+        "expected": [
+          8.5,
+          15.0,
+          0.28
+        ],
+        "actual": [
+          8.5,
+          15.0,
+          0.28
+        ],
+        "status": "PASSED"
+      },
+      "wall_front": {
+        "expected": [
+          8.5,
+          0.18,
+          3.75
+        ],
+        "actual": [
+          8.5,
+          0.18,
+          3.75
+        ],
+        "status": "PASSED"
+      },
+      "wall_rear": {
+        "expected": [
+          8.5,
+          0.18,
+          3.75
+        ],
+        "actual": [
+          8.5,
+          0.18,
+          3.75
+        ],
+        "status": "PASSED"
+      },
+      "wall_left": {
+        "expected": [
+          0.18,
+          15.0,
+          3.75
+        ],
+        "actual": [
+          0.18,
+          15.0,
+          3.75
+        ],
+        "status": "PASSED"
+      },
+      "wall_right": {
+        "expected": [
+          0.18,
+          15.0,
+          3.75
+        ],
+        "actual": [
+          0.18,
+          15.0,
+          3.75
+        ],
+        "status": "PASSED"
+      },
+      "roof": {
+        "expected": [
+          8.5,
+          15.0,
+          0.2
+        ],
+        "actual": [
+          8.5,
+          15.0,
+          0.2
+        ],
+        "status": "PASSED"
+      }
+    },
+    "cutouts_created": 7,
+    "cutouts_list": [
+      "front_entry_door",
+      "front_left_display_window",
+      "front_right_display_window",
+      "rear_service_door",
+      "right_side_small_01",
+      "right_side_small_02",
+      "left_side_small_01"
+    ],
+    "summary": {
+      "critical_issues": 0,
+      "major_issues": 0,
+      "minor_issues": 0,
+      "convergence": 100.0,
+      "phase_1a_ready": true
+    }
+  }
+}

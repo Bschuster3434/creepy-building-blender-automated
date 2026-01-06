@@ -234,6 +234,83 @@ if door_alcove.get('enabled', False):
         )
         apply_material(alcove_back_wall, spec.get('phase_1a_colors', {}).get('walls', '#808080'))
 
+    # Alcove ceiling (trapezoidal piece covering the top)
+    if door_alcove.get('ceiling', {}).get('enabled', False):
+        ceiling_spec = door_alcove['ceiling']
+        ceiling_thickness = ceiling_spec['thickness']
+        ceiling_elevation = ceiling_spec['elevation']
+        ceiling_front_width = ceiling_spec['front_width']
+        ceiling_back_width = ceiling_spec['back_width']
+        ceiling_depth = ceiling_spec['depth']
+
+        # Create trapezoidal mesh for alcove ceiling
+        mesh = bpy.data.meshes.new("Alcove_Ceiling_Mesh")
+        obj = bpy.data.objects.new("Alcove_Ceiling", mesh)
+        bpy.context.collection.objects.link(obj)
+
+        bm = bmesh.new()
+
+        # Trapezoid vertices (bottom face at Z=ceiling_elevation)
+        # Front edge (wider)
+        front_left_x = -ceiling_front_width / 2
+        front_right_x = ceiling_front_width / 2
+        front_y = door_alcove['position']['y_front']  # -7.5
+
+        # Back edge (narrower)
+        back_left_x = -ceiling_back_width / 2
+        back_right_x = ceiling_back_width / 2
+        back_y = door_alcove['position']['y_back']  # -6.5
+
+        # Bottom face vertices (at ceiling elevation)
+        v0 = bm.verts.new((front_left_x, front_y, ceiling_elevation))
+        v1 = bm.verts.new((front_right_x, front_y, ceiling_elevation))
+        v2 = bm.verts.new((back_right_x, back_y, ceiling_elevation))
+        v3 = bm.verts.new((back_left_x, back_y, ceiling_elevation))
+
+        # Top face vertices (at ceiling_elevation + thickness)
+        v4 = bm.verts.new((front_left_x, front_y, ceiling_elevation + ceiling_thickness))
+        v5 = bm.verts.new((front_right_x, front_y, ceiling_elevation + ceiling_thickness))
+        v6 = bm.verts.new((back_right_x, back_y, ceiling_elevation + ceiling_thickness))
+        v7 = bm.verts.new((back_left_x, back_y, ceiling_elevation + ceiling_thickness))
+
+        # Create faces
+        bm.faces.new([v0, v1, v2, v3])  # Bottom face
+        bm.faces.new([v4, v7, v6, v5])  # Top face
+        bm.faces.new([v0, v4, v5, v1])  # Front edge
+        bm.faces.new([v2, v6, v7, v3])  # Back edge
+        bm.faces.new([v1, v5, v6, v2])  # Right side
+        bm.faces.new([v0, v3, v7, v4])  # Left side
+
+        bm.to_mesh(mesh)
+        bm.free()
+        apply_material(obj, spec.get('phase_1a_colors', {}).get('walls', '#808080'))
+
+        print(f"  ✓ Alcove ceiling created: trapezoidal {ceiling_front_width}m × {ceiling_back_width}m, thickness {ceiling_thickness}m")
+
+    # Alcove header bar (horizontal lintel across top of opening)
+    if door_alcove.get('header_bar', {}).get('enabled', False):
+        header_spec = door_alcove['header_bar']
+        header_width = header_spec['width']
+        header_height = header_spec['height']
+        header_depth = header_spec['depth']
+        header_x = header_spec['position']['x']
+        header_y = header_spec['position']['y']
+        header_z_top = header_spec['position']['z']
+
+        # Center Z position (top of header is at z_top, so center is z_top - height/2)
+        header_z_center = header_z_top - header_height / 2
+
+        header_bar = create_box(
+            "Alcove_Header_Bar",
+            width=header_width,
+            depth=header_depth,
+            height=header_height,
+            location=(header_x, header_y, header_z_center)
+        )
+        apply_material(header_bar, spec.get('phase_1a_colors', {}).get('walls', '#808080'))
+
+        print(f"  ✓ Alcove header bar created: {header_width}m wide × {header_height}m high at top of opening")
+
     print(f"  ✓ Angled alcove walls created: trapezoid shape, front {door_alcove['front_opening']}m → back {door_alcove['back_opening']}m")
 else:
     print("  Alcove disabled in spec")
@@ -241,14 +318,18 @@ else:
 # Roof
 print("[1.3] Building Roof...")
 roof_z = wall_height + roof['thickness']/2  # Roof sits on walls at Z=wall_height
+# Roof extends to outer wall faces (flush with walls)
+roof_width = roof.get('width', building_width + walls['thickness'])  # Default: cover walls
+roof_depth = roof.get('depth', building_depth + walls['thickness'])
 roof_obj = create_box(
     "Roof",
-    width=building_width,
-    depth=building_depth,
+    width=roof_width,
+    depth=roof_depth,
     height=roof['thickness'],
     location=(0, 0, roof_z)
 )
 apply_material(roof_obj, spec.get('phase_1a_colors', {}).get('roof', '#404040'))
+print(f"  Roof: {roof_width}m × {roof_depth}m (extends to outer wall faces)")
 
 # Parapet (3-level stepped)
 print("[1.3.5] Building Parapet...")
@@ -258,63 +339,92 @@ if parapet_spec.get('enabled', True):  # Default to enabled since it's in baseli
     parapet_thickness = parapet_spec.get('thickness', 0.10)
     roof_top = wall_height + roof['thickness']  # 3.95m (top of roof in spec coordinates)
 
-    # Front section parapets (1.05m above roof, spans first 5m depth)
-    front_height = parapet_config.get('front_height', 1.05)
-    front_span = parapet_config.get('front_span', 5.0)
-    front_y_center = -building_depth/2 + front_span/2  # -7.5 + 2.5 = -5.0
-
-    parapet_left_front = create_box(
-        "Parapet_Left_Front",
-        width=parapet_thickness,
-        depth=front_span,
-        height=front_height,
-        location=(-building_width/2, front_y_center, roof_top + front_height/2)
-    )
-    apply_material(parapet_left_front, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
-
-    parapet_right_front = create_box(
-        "Parapet_Right_Front",
-        width=parapet_thickness,
-        depth=front_span,
-        height=front_height,
-        location=(building_width/2, front_y_center, roof_top + front_height/2)
-    )
-    apply_material(parapet_right_front, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
+    # Front facade parapet (flat across front, 3 inches taller than side parapets)
+    front_facade_height = parapet_spec.get('front_facade', {}).get('height', 0.53)
 
     parapet_front = create_box(
         "Parapet_Front",
-        width=building_width,
+        width=roof_width,  # Use roof width to cover full roof edge
         depth=parapet_thickness,
-        height=front_height,
-        location=(0, -building_depth/2, roof_top + front_height/2)
+        height=front_facade_height,
+        location=(0, -building_depth/2, roof_top + front_facade_height/2)
     )
     apply_material(parapet_front, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
 
-    # Middle section parapets (0.45m above roof, spans next 5m depth)
-    middle_height = parapet_config.get('middle_height', 0.45)
-    middle_span = parapet_config.get('middle_span', 5.0)
-    middle_y_center = -building_depth/2 + front_span + middle_span/2  # -7.5 + 5.0 + 2.5 = 0.0
+    # Side parapets - 4 levels with equal height steps (0.45m → 0.30m → 0.15m → 0.0m)
+    # Level 1 - Front section (0.45m above roof, spans first 3.75m depth)
+    level_1_height = parapet_config.get('level_1_height', 0.45)
+    level_1_span = parapet_config.get('level_1_span', 3.75)
+    level_1_y_center = -building_depth/2 + level_1_span/2  # -7.5 + 1.875 = -5.625
 
-    parapet_left_middle = create_box(
-        "Parapet_Left_Middle",
+    parapet_left_level_1 = create_box(
+        "Parapet_Left_Level_1",
         width=parapet_thickness,
-        depth=middle_span,
-        height=middle_height,
-        location=(-building_width/2, middle_y_center, roof_top + middle_height/2)
+        depth=level_1_span,
+        height=level_1_height,
+        location=(-building_width/2, level_1_y_center, roof_top + level_1_height/2)
     )
-    apply_material(parapet_left_middle, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
+    apply_material(parapet_left_level_1, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
 
-    parapet_right_middle = create_box(
-        "Parapet_Right_Middle",
+    parapet_right_level_1 = create_box(
+        "Parapet_Right_Level_1",
         width=parapet_thickness,
-        depth=middle_span,
-        height=middle_height,
-        location=(building_width/2, middle_y_center, roof_top + middle_height/2)
+        depth=level_1_span,
+        height=level_1_height,
+        location=(building_width/2, level_1_y_center, roof_top + level_1_height/2)
     )
-    apply_material(parapet_right_middle, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
+    apply_material(parapet_right_level_1, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
 
-    # Rear section: no parapet (rear_height = 0.0)
-    print("  ✓ 3-level stepped parapet complete (front: 1.05m, middle: 0.45m, rear: none)")
+    # Level 2 - Second section (0.30m above roof, spans next 3.75m depth)
+    level_2_height = parapet_config.get('level_2_height', 0.30)
+    level_2_span = parapet_config.get('level_2_span', 3.75)
+    level_2_y_center = -building_depth/2 + level_1_span + level_2_span/2  # -7.5 + 3.75 + 1.875 = -1.875
+
+    parapet_left_level_2 = create_box(
+        "Parapet_Left_Level_2",
+        width=parapet_thickness,
+        depth=level_2_span,
+        height=level_2_height,
+        location=(-building_width/2, level_2_y_center, roof_top + level_2_height/2)
+    )
+    apply_material(parapet_left_level_2, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
+
+    parapet_right_level_2 = create_box(
+        "Parapet_Right_Level_2",
+        width=parapet_thickness,
+        depth=level_2_span,
+        height=level_2_height,
+        location=(building_width/2, level_2_y_center, roof_top + level_2_height/2)
+    )
+    apply_material(parapet_right_level_2, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
+
+    # Level 3 - Third section (0.15m above roof, spans next 3.75m depth)
+    level_3_height = parapet_config.get('level_3_height', 0.15)
+    level_3_span = parapet_config.get('level_3_span', 3.75)
+    level_3_y_center = -building_depth/2 + level_1_span + level_2_span + level_3_span/2  # -7.5 + 3.75 + 3.75 + 1.875 = 1.875
+
+    parapet_left_level_3 = create_box(
+        "Parapet_Left_Level_3",
+        width=parapet_thickness,
+        depth=level_3_span,
+        height=level_3_height,
+        location=(-building_width/2, level_3_y_center, roof_top + level_3_height/2)
+    )
+    apply_material(parapet_left_level_3, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
+
+    parapet_right_level_3 = create_box(
+        "Parapet_Right_Level_3",
+        width=parapet_thickness,
+        depth=level_3_span,
+        height=level_3_height,
+        location=(building_width/2, level_3_y_center, roof_top + level_3_height/2)
+    )
+    apply_material(parapet_right_level_3, spec.get('phase_1a_colors', {}).get('parapet', '#8B4513'))
+
+    # Level 4 - Rear section: no parapet (0.0m height, no geometry created)
+    print("  ✓ 4-level stepped parapet complete:")
+    print(f"    Front facade: {front_facade_height}m (flat)")
+    print(f"    Side level 1: {level_1_height}m, level 2: {level_2_height}m, level 3: {level_3_height}m, level 4: none")
 else:
     print("  Parapet disabled in spec")
 
@@ -357,6 +467,52 @@ chimney_obj = create_box(
     location=(chimney['position_x'], chimney['position_y'], chimney_z)
 )
 apply_material(chimney_obj, spec.get('phase_1a_colors', {}).get('chimney', '#8B4513'))
+
+# Gabled roof on top of chimney
+gabled_roof_spec = chimney.get('gabled_roof', {})
+if gabled_roof_spec.get('enabled', False):
+    import bmesh
+
+    gable_height = gabled_roof_spec.get('height', 0.3)
+    chimney_width = chimney['width']   # X dimension
+    chimney_depth = chimney['depth']   # Y dimension
+    chimney_x = chimney['position_x']
+    chimney_y = chimney['position_y']
+    chimney_top_z = chimney_base_z + chimney_height
+
+    # Create gabled roof mesh
+    mesh = bpy.data.meshes.new("Chimney_Gable_Mesh")
+    gable_obj = bpy.data.objects.new("Chimney_Gable", mesh)
+    bpy.context.collection.objects.link(gable_obj)
+
+    bm = bmesh.new()
+
+    # Ridge runs front-to-back (Y axis)
+    # Base corners (at chimney top)
+    half_width = chimney_width / 2
+    half_depth = chimney_depth / 2
+
+    v0 = bm.verts.new((chimney_x - half_width, chimney_y - half_depth, chimney_top_z))  # Front left
+    v1 = bm.verts.new((chimney_x + half_width, chimney_y - half_depth, chimney_top_z))  # Front right
+    v2 = bm.verts.new((chimney_x + half_width, chimney_y + half_depth, chimney_top_z))  # Rear right
+    v3 = bm.verts.new((chimney_x - half_width, chimney_y + half_depth, chimney_top_z))  # Rear left
+
+    # Ridge vertices (at peak)
+    v4 = bm.verts.new((chimney_x, chimney_y - half_depth, chimney_top_z + gable_height))  # Front ridge
+    v5 = bm.verts.new((chimney_x, chimney_y + half_depth, chimney_top_z + gable_height))  # Rear ridge
+
+    # Create faces
+    bm.faces.new([v0, v1, v2, v3])  # Bottom (base)
+    bm.faces.new([v0, v4, v1])      # Front gable triangle
+    bm.faces.new([v3, v2, v5])      # Rear gable triangle
+    bm.faces.new([v0, v3, v5, v4])  # Left sloped rectangle
+    bm.faces.new([v1, v4, v5, v2])  # Right sloped rectangle
+
+    bm.to_mesh(mesh)
+    bm.free()
+
+    apply_material(gable_obj, spec.get('phase_1a_colors', {}).get('chimney', '#8B4513'))
+    print(f"  ✓ Chimney gabled roof created: {gable_height}m tall")
 
 # Boolean cutouts
 print("[1.7] Applying Boolean Cutouts...")
@@ -468,11 +624,13 @@ verification_specs = [
 # Add parapet verification if parapet was built
 if parapet_spec.get('enabled', True):
     verification_specs.extend([
-        {'object': parapet_left_front, 'width': parapet_thickness, 'depth': front_span, 'height': front_height},
-        {'object': parapet_right_front, 'width': parapet_thickness, 'depth': front_span, 'height': front_height},
-        {'object': parapet_front, 'width': building_width, 'depth': parapet_thickness, 'height': front_height},
-        {'object': parapet_left_middle, 'width': parapet_thickness, 'depth': middle_span, 'height': middle_height},
-        {'object': parapet_right_middle, 'width': parapet_thickness, 'depth': middle_span, 'height': middle_height},
+        {'object': parapet_front, 'width': roof_width, 'depth': parapet_thickness, 'height': front_facade_height},
+        {'object': parapet_left_level_1, 'width': parapet_thickness, 'depth': level_1_span, 'height': level_1_height},
+        {'object': parapet_right_level_1, 'width': parapet_thickness, 'depth': level_1_span, 'height': level_1_height},
+        {'object': parapet_left_level_2, 'width': parapet_thickness, 'depth': level_2_span, 'height': level_2_height},
+        {'object': parapet_right_level_2, 'width': parapet_thickness, 'depth': level_2_span, 'height': level_2_height},
+        {'object': parapet_left_level_3, 'width': parapet_thickness, 'depth': level_3_span, 'height': level_3_height},
+        {'object': parapet_right_level_3, 'width': parapet_thickness, 'depth': level_3_span, 'height': level_3_height},
     ])
 
 inline_results = verify_all_objects(verification_specs, tolerance=0.01)

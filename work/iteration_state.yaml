@@ -1,0 +1,72 @@
+# Iteration State - What's Actually Built and Requested
+# Updated after each approved iteration
+# This file prevents unintended changes between iterations
+
+iteration: 6
+approved: false
+baseline_iteration: 4  # Last known good iteration
+
+# Requested features that ARE built (baseline from iteration 004)
+requested_features:
+  foundation: true
+  walls: true
+  roof: true
+
+  # Parapet was in iteration 004 and working - KEEP IT
+  parapet:
+    enabled: true
+    style: stepped_3_level
+    front_height: 1.05    # Above roof
+    middle_height: 0.45   # Above roof
+    rear_height: 0.0      # No parapet at rear
+    notes: "User requested this in earlier iteration - DO NOT REMOVE"
+
+  # Canopy with 3 posts (left, center, right)
+  canopy:
+    enabled: true
+    width: 8.5
+    depth: 2.5
+    height: 2.85
+    posts:
+      left: true          # Position at edges (x=-4.0)
+      center: true        # STRUCTURAL - holds beam (x=0.0)
+      right: true         # Position at edges (x=4.0)
+    post_positions:
+      left_x: -4.0
+      center_x: 0.0
+      right_x: 4.0
+      y: -10.0  # Front edge of canopy
+    notes: "User said 'posts at edges' means outer posts closer to edges, NOT remove center"
+
+  # Chimney
+  chimney:
+    enabled: true
+    position_x: 3.8       # Right side
+    position_y: 9.5       # Back of middle parapet section
+    position_z: 3.95      # Sits on roof
+    width: 0.8
+    depth: 0.8
+    height: 1.5           # Height above roof
+    notes: "Position specified: back of middle parapet, right side"
+
+  # Cutouts - ONLY these 3 requested by user
+  cutouts:
+    front_entry_door: true
+    front_left_display_window: true
+    front_right_display_window: true
+
+# Features in spec but NOT requested (don't build these)
+unrequested_features:
+  cutouts:
+    - rear_service_door      # Never requested by user
+    - left_side_small_01     # Never requested by user
+    - right_side_small_01    # Never requested by user
+    - right_side_small_02    # Never requested by user
+
+# Window settings (user requested higher, but must not intersect canopy)
+window_settings:
+  sill_height: 0.45           # ~1.5 feet (raised from 0.15m)
+  window_height: 2.25         # Reduced to ensure clearance
+  canopy_bottom: 2.85
+  required_clearance: 0.15    # Minimum gap to canopy
+  notes: "Window top must be below canopy bottom with margin"

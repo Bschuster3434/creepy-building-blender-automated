@@ -1,0 +1,80 @@
+{
+  "checkpoint": "automated_verification_039",
+  "timestamp": "2026-01-05T18:45:30.034135",
+  "data": {
+    "issues": {
+      "critical": [],
+      "major": [],
+      "minor": [
+        {
+          "dimension": "overall_width",
+          "expected": 8.5,
+          "actual": 8.680000305175781,
+          "error_pct": 2.1176506491268383,
+          "error_abs": 0.18000030517578125
+        },
+        {
+          "dimension": "overall_depth",
+          "expected": 15.0,
+          "actual": 15.180000305175781,
+          "error_pct": 1.2000020345052083,
+          "error_abs": 0.18000030517578125
+        }
+      ],
+      "passed": [
+        {
+          "dimension": "wall_height",
+          "expected": 3.75,
+          "actual": 3.75,
+          "error_pct": 0.0,
+          "error_abs": 0.0
+        },
+        {
+          "dimension": "parapet_height_front",
+          "expected": 1.05,
+          "actual": 1.0499999999999998,
+          "error_pct": 2.114710523095536e-14,
+          "error_abs": 2.220446049250313e-16
+        },
+        {
+          "dimension": "parapet_height_middle",
+          "expected": 0.45,
+          "actual": 0.45000009536743146,
+          "error_pct": 2.1192762544863797e-05,
+          "error_abs": 9.536743145188709e-08
+        },
+        {
+          "dimension": "canopy_width",
+          "expected": 8.5,
+          "actual": 8.5,
+          "error_pct": 0.0,
+          "error_abs": 0.0
+        },
+        {
+          "dimension": "canopy_depth",
+          "expected": 2.5,
+          "actual": 2.5,
+          "error_pct": 0.0,
+          "error_abs": 0.0
+        },
+        {
+          "dimension": "canopy_post_count",
+          "expected": 3,
+          "actual": 3,
+          "error_pct": 0.0
+        },
+        {
+          "dimension": "chimney_total_height",
+          "expected": 5.45,
+          "actual": 5.449999809265137,
+          "error_pct": 3.4997222653006547e-06,
+          "error_abs": 1.9073486345888568e-07
+        }
+      ]
+    },
+    "critical_count": 0,
+    "major_count": 0,
+    "minor_count": 2,
+    "passed_count": 7
+  }
+}
