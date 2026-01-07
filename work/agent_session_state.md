@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-07
 **Current Phase**: Phase 2 - Materials
-**Current Status**: Geometry Frozen, Ready for Materials
+**Current Status**: COMPLETED - Materials Applied
 
 ---
 
@@ -15,7 +15,7 @@
 | Phase 1C | Interior Layout + Window Fix | COMPLETED | 2026-01-07 |
 | Pre-Phase 2 | Object Organization | COMPLETED | 2026-01-07 |
 | Pre-Phase 2 | Door Animation Prep | COMPLETED | 2026-01-07 |
-| Phase 2 | Materials & Textures | PENDING | - |
+| Phase 2 | Materials & Textures | COMPLETED | 2026-01-07 |
 | Phase 3 | Environment & Scene | PENDING | - |
 
 ---
@@ -145,28 +145,36 @@ Building/
 
 ---
 
-## Phase 2 - Materials (UPCOMING)
+### Phase 2 - Materials (COMPLETED)
 
-**Prerequisites**:
-- All geometry frozen (no mesh changes)
-- Object organization complete
-- Door animation pivots set up
+**Final Iteration**: 001
+**Output**: `exports/glb/building_phase_2_iter_001.glb`
 
-**Planned Work**:
-1. Exterior brick material (walls)
-2. Window glass material (transparent, 85-90% opacity)
-3. Window frame material (white painted aluminum)
-4. Door frame/panel materials (white painted wood)
-5. Roof material (tar and gravel)
-6. Metal materials (canopy posts, hardware)
-7. Interior materials (floor, ceiling, walls)
-8. Foundation material (concrete)
+**Polyhaven Textures Downloaded (2K resolution)**:
+- `brown_brick_02` - Brown brick for exterior walls
+- `concrete_floor_01` - Clean concrete for foundation
+- `bitumen` - Flat roof material
+- `brown_planks_03` - Wood plank floor for interior
+- `beige_wall_001` - Interior walls/ceiling
 
-**Material Aesthetic** (per PROJECT_OVERVIEW.md):
-- Realistic, well-maintained commercial building
-- Clean brick with minimal weathering (5-10% variation)
-- Transparent glass (NOT opaque black)
-- Light rust at joints only (8% coverage)
+**Procedural Materials Created**:
+- `Glass_Clear` - 90% transmission, IOR 1.45, blend mode
+- `White_Painted_Aluminum` - Window frames/trim
+- `White_Painted_Wood` - Door frames/muntins
+- `Brushed_Metal` - Door hardware
+- `White_Painted_Metal` - Canopy posts
+
+**Materials Applied**:
+- Exterior walls, parapets, chimney, alcove walls → Brown brick
+- Foundation → Concrete
+- Roof, canopy roof → Bitumen
+- Canopy posts → White painted metal
+- Window frames/trim → White aluminum
+- Window/door glass → Clear glass (transparent)
+- Door frames/muntins → White painted wood
+- Door hardware → Brushed metal
+- Interior floor → Wood planks
+- Interior ceiling/walls → Beige wall plaster
 
 ---
 
@@ -180,7 +188,8 @@ Creepy Building Myrtle Beach Highway/
 ├── exports/glb/                   # GLB exports by phase/iteration
 │   ├── building_phase_1a_iter_*.glb
 │   ├── building_phase_1b_iter_*.glb
-│   └── building_phase_1c_iter_*.glb
+│   ├── building_phase_1c_iter_*.glb
+│   └── building_phase_2_iter_*.glb
 ├── work/
 │   ├── spec/
 │   │   ├── phase_1a/building_geometry.yaml
@@ -197,7 +206,7 @@ Creepy Building Myrtle Beach Highway/
 ## Git Status
 
 **Last Commit**: 2026-01-07
-**Message**: "Complete Phase 1B/1C geometry with interior layout"
+**Message**: "Phase 2: Apply materials and textures to building"
 
 **Branches**: master (main working branch)
 
@@ -205,18 +214,13 @@ Creepy Building Myrtle Beach Highway/
 
 ## Next Steps
 
-1. **Complete Door Pivot Setup** (current task)
-   - Create pivot empties for front entry doors (left & right)
-   - Create pivot empty for rear service door
-   - Parent door components to pivots
-   - Verify hierarchy exports correctly to GLB
-
-2. **Begin Phase 2 - Materials**
-   - Create material palette based on PROJECT_OVERVIEW guidelines
-   - Apply materials by collection (leverage organization)
-   - Validate in Three.js viewer
-
-3. **Phase 3 - Environment** (future)
-   - Ground surface
-   - Lighting setup
+1. **Phase 3 - Environment & Scene** (upcoming)
+   - Ground surface with texture
+   - Sky/environment lighting
    - Camera positioning for viewer
+   - Additional scene elements (optional)
+
+2. **Optional Enhancements**
+   - Door animation in Three.js viewer (pivots ready)
+   - Additional material refinement
+   - Lighting adjustments
