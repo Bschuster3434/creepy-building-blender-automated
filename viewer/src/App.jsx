@@ -78,6 +78,56 @@ function Model({ url, onLoad }) {
   return <primitive object={scene} />
 }
 
+// Simple low-poly tree
+function Tree({ position, scale = 1, trunkHeight = 2, foliageRadius = 1.5 }) {
+  const actualTrunkHeight = trunkHeight * scale
+  const actualFoliageRadius = foliageRadius * scale
+
+  return (
+    <group position={position}>
+      {/* Trunk */}
+      <mesh position={[0, actualTrunkHeight / 2, 0]} castShadow>
+        <cylinderGeometry args={[0.15 * scale, 0.25 * scale, actualTrunkHeight, 8]} />
+        <meshStandardMaterial color="#5D4037" roughness={0.9} />
+      </mesh>
+      {/* Foliage - layered cones for fuller look */}
+      <mesh position={[0, actualTrunkHeight + actualFoliageRadius * 0.3, 0]} castShadow>
+        <coneGeometry args={[actualFoliageRadius, actualFoliageRadius * 2, 8]} />
+        <meshStandardMaterial color="#2E7D32" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, actualTrunkHeight + actualFoliageRadius * 1.0, 0]} castShadow>
+        <coneGeometry args={[actualFoliageRadius * 0.7, actualFoliageRadius * 1.5, 8]} />
+        <meshStandardMaterial color="#388E3C" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, actualTrunkHeight + actualFoliageRadius * 1.5, 0]} castShadow>
+        <coneGeometry args={[actualFoliageRadius * 0.4, actualFoliageRadius * 1, 8]} />
+        <meshStandardMaterial color="#43A047" roughness={0.8} />
+      </mesh>
+    </group>
+  )
+}
+
+// Tree positions based on reference photos - trees behind and around the building
+const TREE_POSITIONS = [
+  // Large tree to the left (prominent in reference)
+  { pos: [-15, 0, -5], scale: 2.5, trunk: 4, foliage: 3 },
+  // Trees behind building
+  { pos: [-20, 0, -20], scale: 1.8, trunk: 3, foliage: 2.5 },
+  { pos: [-10, 0, -25], scale: 2.0, trunk: 3.5, foliage: 2.8 },
+  { pos: [0, 0, -30], scale: 1.5, trunk: 2.5, foliage: 2 },
+  { pos: [12, 0, -25], scale: 2.2, trunk: 4, foliage: 3 },
+  { pos: [25, 0, -20], scale: 1.7, trunk: 3, foliage: 2.3 },
+  // Trees to the right
+  { pos: [20, 0, -8], scale: 1.9, trunk: 3.5, foliage: 2.5 },
+  { pos: [28, 0, 5], scale: 1.6, trunk: 2.8, foliage: 2 },
+  // Scattered background trees
+  { pos: [-30, 0, -15], scale: 1.4, trunk: 2.5, foliage: 2 },
+  { pos: [35, 0, -15], scale: 1.5, trunk: 2.8, foliage: 2.2 },
+  { pos: [-25, 0, 10], scale: 1.3, trunk: 2.2, foliage: 1.8 },
+  { pos: [30, 0, -30], scale: 2.0, trunk: 3.5, foliage: 2.8 },
+  { pos: [-35, 0, -30], scale: 1.8, trunk: 3, foliage: 2.5 },
+]
+
 // First-person movement controller with collision detection
 function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
   const { camera } = useThree()
@@ -309,6 +359,17 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
           metalness={0}
         />
       </mesh>
+
+      {/* Trees around the property */}
+      {TREE_POSITIONS.map((tree, i) => (
+        <Tree
+          key={i}
+          position={tree.pos}
+          scale={tree.scale}
+          trunkHeight={tree.trunk}
+          foliageRadius={tree.foliage}
+        />
+      ))}
 
       {isFirstPerson ? (
         <>
