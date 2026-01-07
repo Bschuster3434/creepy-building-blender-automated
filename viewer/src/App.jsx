@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useRef, useEffect, useCallback } from 'react'
+import React, { Suspense, useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Sky, PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -79,14 +79,21 @@ function Model({ url, onLoad }) {
 }
 
 // Simple low-poly tree
-function Tree({ position, scale = 1, trunkHeight = 2, foliageRadius = 1.5 }) {
+function Tree({ position, scale = 1, trunkHeight = 2, foliageRadius = 1.5, onTrunkRef }) {
   const actualTrunkHeight = trunkHeight * scale
   const actualFoliageRadius = foliageRadius * scale
+  const trunkRef = useRef()
+
+  useEffect(() => {
+    if (onTrunkRef && trunkRef.current) {
+      onTrunkRef(trunkRef.current)
+    }
+  }, [onTrunkRef])
 
   return (
     <group position={position}>
       {/* Trunk */}
-      <mesh position={[0, actualTrunkHeight / 2, 0]} castShadow>
+      <mesh ref={trunkRef} position={[0, actualTrunkHeight / 2, 0]} castShadow>
         <cylinderGeometry args={[0.15 * scale, 0.25 * scale, actualTrunkHeight, 8]} />
         <meshStandardMaterial color="#5D4037" roughness={0.9} />
       </mesh>
@@ -245,11 +252,25 @@ function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
 function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
   const controlsRef = useRef()
   const { camera } = useThree()
-  const [collisionMeshes, setCollisionMeshes] = useState([])
+  const [buildingMeshes, setBuildingMeshes] = useState([])
+  const [treeMeshes, setTreeMeshes] = useState([])
+
+  // Combine building and tree meshes for collision
+  const collisionMeshes = useMemo(() => {
+    return [...buildingMeshes, ...treeMeshes]
+  }, [buildingMeshes, treeMeshes])
 
   // Handle model load - collect meshes for collision
   const handleModelLoad = useCallback((meshes) => {
-    setCollisionMeshes(meshes)
+    setBuildingMeshes(meshes)
+  }, [])
+
+  // Handle tree trunk registration
+  const handleTreeTrunk = useCallback((mesh) => {
+    setTreeMeshes(prev => {
+      if (prev.includes(mesh)) return prev
+      return [...prev, mesh]
+    })
   }, [])
 
   // Position camera for first-person view (in front of building, looking at it)
@@ -369,6 +390,7 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
           scale={tree.scale}
           trunkHeight={tree.trunk}
           foliageRadius={tree.foliage}
+          onTrunkRef={handleTreeTrunk}
         />
       ))}
 
