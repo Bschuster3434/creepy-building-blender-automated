@@ -100,11 +100,17 @@ function Model({ url, onLoad }) {
 
   useEffect(() => {
     if (onLoad && scene) {
-      // Collect all meshes for collision detection
+      // Collect all meshes for collision detection, hide Cutter objects
       const collisionMeshes = []
       scene.traverse((child) => {
         if (child.isMesh) {
-          collisionMeshes.push(child)
+          const name = child.name || ''
+          // Hide Boolean modifier cutter objects (used for window/door cutouts)
+          if (name.includes('Cutter') || name.includes('_Cutter')) {
+            child.visible = false
+          } else {
+            collisionMeshes.push(child)
+          }
         }
       })
       onLoad(collisionMeshes)
