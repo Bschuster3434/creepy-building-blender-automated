@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useRef, useEffect } from 'react'
+import React, { Suspense, useState, useRef, useEffect, useCallback } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Environment, Grid, PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -182,6 +182,21 @@ export default function App() {
   const [selectedModel, setSelectedModel] = useState(0)
   const [isFirstPerson, setIsFirstPerson] = useState(false)
 
+  // Toggle mode with F key
+  const toggleMode = useCallback(() => {
+    setIsFirstPerson(prev => !prev)
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'KeyF' && !e.repeat) {
+        toggleMode()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [toggleMode])
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
@@ -196,7 +211,7 @@ export default function App() {
         />
       </Canvas>
 
-      {/* Controls Panel */}
+      {/* Controls Panel - Always visible */}
       <div style={{
         position: 'absolute',
         top: 20,
@@ -206,8 +221,7 @@ export default function App() {
         borderRadius: 8,
         color: 'white',
         maxHeight: '90vh',
-        overflowY: 'auto',
-        display: isFirstPerson ? 'none' : 'block'
+        overflowY: 'auto'
       }}>
         <h3 style={{ margin: '0 0 10px 0', fontSize: 14 }}>Building Viewer</h3>
         <p style={{ margin: '0 0 10px 0', fontSize: 11, opacity: 0.6 }}>
@@ -241,29 +255,37 @@ export default function App() {
           })()}
         </select>
 
-        <button
-          onClick={() => setIsFirstPerson(true)}
-          style={{
-            marginTop: 12,
-            padding: '10px 16px',
-            borderRadius: 4,
-            border: 'none',
-            background: '#4a6fa5',
-            color: 'white',
-            fontSize: 13,
-            cursor: 'pointer',
-            width: '100%'
-          }}
-        >
-          Enter First-Person Mode
-        </button>
-
-        <p style={{ margin: '10px 0 0 0', fontSize: 11, opacity: 0.7 }}>
-          Drag to rotate | Scroll to zoom
+        <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.7 }}>
+          {isFirstPerson ? 'Drag to rotate | Scroll to zoom' : 'WASD to move | Mouse to look'}
         </p>
       </div>
 
-      {/* First-Person Instructions */}
+      {/* Mode Indicator - Always visible */}
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        background: isFirstPerson ? 'rgba(74, 111, 165, 0.9)' : 'rgba(0, 0, 0, 0.85)',
+        padding: '12px 20px',
+        borderRadius: 8,
+        color: 'white',
+        textAlign: 'center'
+      }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
+          {isFirstPerson ? 'First-Person Mode' : 'Orbit Mode'}
+        </p>
+        <p style={{ margin: '6px 0 0 0', fontSize: 12, opacity: 0.8 }}>
+          Press <span style={{
+            background: 'rgba(255,255,255,0.2)',
+            padding: '2px 8px',
+            borderRadius: 4,
+            fontFamily: 'monospace',
+            fontWeight: 'bold'
+          }}>F</span> to switch
+        </p>
+      </div>
+
+      {/* First-Person Controls Help */}
       {isFirstPerson && (
         <div style={{
           position: 'absolute',
@@ -277,10 +299,10 @@ export default function App() {
           textAlign: 'center'
         }}>
           <p style={{ margin: 0, fontSize: 13 }}>
-            <strong>WASD</strong> to move | <strong>Mouse</strong> to look | <strong>ESC</strong> to exit
+            <strong>WASD</strong> to move | <strong>Mouse</strong> to look | <strong>ESC</strong> to unlock mouse
           </p>
           <p style={{ margin: '5px 0 0 0', fontSize: 11, opacity: 0.7 }}>
-            Click anywhere to enable mouse look
+            Click to enable mouse look
           </p>
         </div>
       )}
