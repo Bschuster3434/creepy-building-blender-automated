@@ -5,7 +5,9 @@ import * as THREE from 'three'
 
 const MODELS = {
   'Phase 2 (Materials)': [
-    { name: 'Phase 2 - Iter 006 (Latest)', file: '/building_phase_2_iter_006.glb' },
+    { name: 'Phase 2 - Iter 008 (Latest)', file: '/building_phase_2_iter_008.glb' },
+    { name: 'Phase 2 - Iter 007', file: '/building_phase_2_iter_007.glb' },
+    { name: 'Phase 2 - Iter 006', file: '/building_phase_2_iter_006.glb' },
     { name: 'Phase 2 - Iter 001', file: '/building_phase_2_iter_001.glb' },
     { name: 'Phase 1C - Iter 007 (With Door Pivots)', file: '/building_phase_1c_iter_007.glb' },
   ],
