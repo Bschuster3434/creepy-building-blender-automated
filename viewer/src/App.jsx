@@ -59,17 +59,34 @@ const MODELS = {
 
 const ALL_MODELS = Object.values(MODELS).flat()
 
-function Model({ url }) {
+function Model({ url, onLoad }) {
   const { scene } = useGLTF(url)
+
+  useEffect(() => {
+    if (onLoad && scene) {
+      // Collect all meshes for collision detection
+      const collisionMeshes = []
+      scene.traverse((child) => {
+        if (child.isMesh) {
+          collisionMeshes.push(child)
+        }
+      })
+      onLoad(collisionMeshes)
+    }
+  }, [scene, onLoad])
+
   return <primitive object={scene} />
 }
 
-// First-person movement controller
-function FirstPersonMovement({ speed = 5 }) {
+// First-person movement controller with collision detection
+function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
   const { camera } = useThree()
   const moveState = useRef({ forward: false, backward: false, left: false, right: false })
   const velocity = useRef(new THREE.Vector3())
   const direction = useRef(new THREE.Vector3())
+  const raycaster = useRef(new THREE.Raycaster())
+
+  const COLLISION_DISTANCE = 1.0 // How close before stopping
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -96,6 +113,16 @@ function FirstPersonMovement({ speed = 5 }) {
     }
   }, [])
 
+  // Check collision in a given direction
+  const checkCollision = (directionVec) => {
+    if (collisionMeshes.length === 0) return false
+
+    raycaster.current.set(camera.position, directionVec.normalize())
+    const intersects = raycaster.current.intersectObjects(collisionMeshes, true)
+
+    return intersects.length > 0 && intersects[0].distance < COLLISION_DISTANCE
+  }
+
   useFrame((_, delta) => {
     const { forward, backward, left, right } = moveState.current
 
@@ -103,15 +130,41 @@ function FirstPersonMovement({ speed = 5 }) {
     direction.current.x = Number(right) - Number(left)
     direction.current.normalize()
 
+    // Calculate intended movement
+    let moveX = 0
+    let moveZ = 0
+
     if (forward || backward) {
-      velocity.current.z = direction.current.z * speed * delta
+      moveZ = direction.current.z * speed * delta
     }
     if (left || right) {
-      velocity.current.x = direction.current.x * speed * delta
+      moveX = direction.current.x * speed * delta
     }
 
-    camera.translateX(velocity.current.x)
-    camera.translateZ(-velocity.current.z)
+    // Get world direction for collision checks
+    const cameraDirection = new THREE.Vector3()
+    camera.getWorldDirection(cameraDirection)
+    cameraDirection.y = 0
+    cameraDirection.normalize()
+
+    const cameraRight = new THREE.Vector3()
+    cameraRight.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0))
+
+    // Check forward/backward collision
+    if (moveZ !== 0) {
+      const moveDir = cameraDirection.clone().multiplyScalar(moveZ > 0 ? -1 : 1)
+      if (!checkCollision(moveDir)) {
+        camera.translateZ(-moveZ)
+      }
+    }
+
+    // Check left/right collision
+    if (moveX !== 0) {
+      const moveDir = cameraRight.clone().multiplyScalar(moveX > 0 ? 1 : -1)
+      if (!checkCollision(moveDir)) {
+        camera.translateX(moveX)
+      }
+    }
 
     // Keep camera at eye level
     camera.position.y = 1.7
@@ -126,6 +179,12 @@ function FirstPersonMovement({ speed = 5 }) {
 function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
   const controlsRef = useRef()
   const { camera } = useThree()
+  const [collisionMeshes, setCollisionMeshes] = useState([])
+
+  // Handle model load - collect meshes for collision
+  const handleModelLoad = useCallback((meshes) => {
+    setCollisionMeshes(meshes)
+  }, [])
 
   // Position camera for first-person view (in front of building, looking at it)
   useEffect(() => {
@@ -163,7 +222,7 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
       />
 
       <Suspense fallback={null}>
-        <Model url={modelUrl} />
+        <Model url={modelUrl} onLoad={handleModelLoad} />
       </Suspense>
 
       {/* Realistic sky */}
@@ -242,7 +301,7 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
             ref={controlsRef}
             onUnlock={onExitFirstPerson}
           />
-          <FirstPersonMovement speed={8} />
+          <FirstPersonMovement speed={8} collisionMeshes={collisionMeshes} />
         </>
       ) : (
         <OrbitControls
