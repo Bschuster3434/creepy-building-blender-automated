@@ -95,6 +95,69 @@ const MODELS = {
 
 const ALL_MODELS = Object.values(MODELS).flat()
 
+// Reference images organized by category
+const REFERENCES = {
+  'Exterior': {
+    description: 'External views of the building',
+    subcategories: {
+      'Generated Views': [
+        { name: 'Front View', file: '/references/exterior/front-view.png' },
+        { name: 'Back View', file: '/references/exterior/back-view.png' },
+        { name: 'Left Side', file: '/references/exterior/left-side-view.png' },
+        { name: 'Right Side', file: '/references/exterior/right-side-view.png' },
+        { name: 'Corner View', file: '/references/exterior/corner-view.jpg' },
+        { name: 'Corner View 2', file: '/references/exterior/corner-view-2.png' },
+        { name: 'Birdseye View', file: '/references/exterior/birdseye-view.png' },
+        { name: 'Roof Angle', file: '/references/exterior/roof-angle-view.png' },
+        { name: 'Cross Section', file: '/references/exterior/cross-section.png' },
+      ],
+      'Google Maps': [
+        { name: 'Street View 1', file: '/references/exterior/google-maps-01.png' },
+        { name: 'Street View 2', file: '/references/exterior/google-maps-02.png' },
+        { name: 'Street View 3', file: '/references/exterior/google-maps-03.png' },
+        { name: 'Street View 4', file: '/references/exterior/google-maps-04.png' },
+        { name: 'Street View 5', file: '/references/exterior/google-maps-05.png' },
+        { name: 'Street View 6', file: '/references/exterior/google-maps-06.png' },
+        { name: 'Street View 7', file: '/references/exterior/google-maps-07.png' },
+        { name: 'Street View 8', file: '/references/exterior/google-maps-08.png' },
+        { name: 'Overhead', file: '/references/exterior/google-maps-overhead.png' },
+      ],
+    }
+  },
+  'Interior': {
+    description: 'Internal views and layout concepts',
+    subcategories: {
+      'Concepts': [
+        { name: 'Interior Concept', file: '/references/interior/interior-concept.jpg' },
+      ],
+    }
+  },
+  'Details': {
+    description: 'Doors, windows, and architectural details',
+    subcategories: {
+      'Doors': [
+        { name: 'French Door 1', file: '/references/details/french-door-1.png' },
+        { name: 'French Door 2', file: '/references/details/french-door-2.png' },
+        { name: 'French Door 3', file: '/references/details/french-door-3.webp' },
+        { name: 'French Door 4', file: '/references/details/french-door-4.webp' },
+        { name: 'Back Door', file: '/references/details/back-door.png' },
+        { name: 'Front Entry Door', file: '/references/details/front-entry-door.webp' },
+      ],
+      'Windows': [
+        { name: 'Front Window', file: '/references/details/front-window.png' },
+        { name: 'Alcove Window', file: '/references/details/alcove-window.jpg' },
+      ],
+    }
+  },
+}
+
+// Flatten all references for easy navigation
+const ALL_REFERENCES = Object.entries(REFERENCES).flatMap(([category, data]) =>
+  Object.entries(data.subcategories).flatMap(([subcategory, images]) =>
+    images.map(img => ({ ...img, category, subcategory }))
+  )
+)
+
 function Model({ url, onLoad }) {
   const { scene } = useGLTF(url)
 
@@ -463,24 +526,521 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
   )
 }
 
+// Lightbox component for full-screen image viewing
+function Lightbox({ image, allImages, onClose, onNavigate }) {
+  const currentIndex = allImages.findIndex(img => img.file === image.file)
+
+  const goNext = useCallback(() => {
+    if (currentIndex < allImages.length - 1) {
+      onNavigate(allImages[currentIndex + 1])
+    }
+  }, [currentIndex, allImages, onNavigate])
+
+  const goPrev = useCallback(() => {
+    if (currentIndex > 0) {
+      onNavigate(allImages[currentIndex - 1])
+    }
+  }, [currentIndex, allImages, onNavigate])
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Escape') onClose()
+      if (e.code === 'ArrowRight') goNext()
+      if (e.code === 'ArrowLeft') goPrev()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose, goNext, goPrev])
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.95)',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      onClick={onClose}
+    >
+      {/* Header */}
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        right: 20,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        color: 'white',
+      }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 18 }}>{image.name}</h3>
+          <p style={{ margin: '5px 0 0 0', fontSize: 13, opacity: 0.7 }}>
+            {image.category} → {image.subcategory}
+          </p>
+        </div>
+        <div style={{ fontSize: 14, opacity: 0.7 }}>
+          {currentIndex + 1} / {allImages.length}
+        </div>
+      </div>
+
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: 'none',
+          color: 'white',
+          fontSize: 24,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        ×
+      </button>
+
+      {/* Image */}
+      <img
+        src={image.file}
+        alt={image.name}
+        style={{
+          maxWidth: '90%',
+          maxHeight: '80%',
+          objectFit: 'contain',
+          borderRadius: 4,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      />
+
+      {/* Navigation arrows */}
+      {currentIndex > 0 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); goPrev() }}
+          style={{
+            position: 'absolute',
+            left: 20,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: 'none',
+            color: 'white',
+            fontSize: 32,
+            width: 50,
+            height: 80,
+            borderRadius: 8,
+            cursor: 'pointer',
+          }}
+        >
+          ‹
+        </button>
+      )}
+      {currentIndex < allImages.length - 1 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); goNext() }}
+          style={{
+            position: 'absolute',
+            right: 20,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: 'none',
+            color: 'white',
+            fontSize: 32,
+            width: 50,
+            height: 80,
+            borderRadius: 8,
+            cursor: 'pointer',
+          }}
+        >
+          ›
+        </button>
+      )}
+
+      {/* Keyboard hints */}
+      <div style={{
+        position: 'absolute',
+        bottom: 20,
+        color: 'white',
+        fontSize: 12,
+        opacity: 0.6,
+      }}>
+        <span style={{ marginRight: 20 }}>← → Navigate</span>
+        <span>ESC Close</span>
+      </div>
+    </div>
+  )
+}
+
+// Reference Panel - compact bottom-right panel
+function ReferencePanel({ onClose, onOpenGallery, onSelectImage }) {
+  const [activeCategory, setActiveCategory] = useState('Exterior')
+  const categoryData = REFERENCES[activeCategory]
+
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 20,
+      right: 20,
+      background: 'rgba(0, 0, 0, 0.9)',
+      borderRadius: 8,
+      color: 'white',
+      width: 320,
+      maxHeight: '60vh',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '12px 15px',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <h3 style={{ margin: 0, fontSize: 14 }}>Reference Images</h3>
+        <div>
+          <button
+            onClick={onOpenGallery}
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              border: 'none',
+              color: 'white',
+              padding: '4px 10px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontSize: 11,
+              marginRight: 8,
+            }}
+          >
+            View All
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              fontSize: 18,
+              cursor: 'pointer',
+              padding: '0 4px',
+            }}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      {/* Category tabs */}
+      <div style={{
+        display: 'flex',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+      }}>
+        {Object.keys(REFERENCES).map(category => (
+          <button
+            key={category}
+            onClick={() => setActiveCategory(category)}
+            style={{
+              flex: 1,
+              background: activeCategory === category ? 'rgba(74, 111, 165, 0.8)' : 'transparent',
+              border: 'none',
+              color: 'white',
+              padding: '10px 8px',
+              cursor: 'pointer',
+              fontSize: 12,
+              transition: 'background 0.2s',
+            }}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
+      {/* Thumbnails */}
+      <div style={{
+        padding: 10,
+        overflowY: 'auto',
+        flex: 1,
+      }}>
+        {Object.entries(categoryData.subcategories).map(([subcategory, images]) => (
+          <div key={subcategory} style={{ marginBottom: 15 }}>
+            <p style={{ margin: '0 0 8px 0', fontSize: 11, opacity: 0.6 }}>{subcategory}</p>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 6,
+            }}>
+              {images.map(image => (
+                <div
+                  key={image.file}
+                  onClick={() => onSelectImage({ ...image, category: activeCategory, subcategory })}
+                  style={{
+                    aspectRatio: '4/3',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    position: 'relative',
+                  }}
+                >
+                  <img
+                    src={image.file}
+                    alt={image.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                    loading="lazy"
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+                    padding: '15px 4px 4px 4px',
+                    fontSize: 9,
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {image.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer hint */}
+      <div style={{
+        padding: '8px 15px',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        fontSize: 11,
+        opacity: 0.5,
+        textAlign: 'center',
+      }}>
+        Press <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: 3 }}>R</span> to toggle
+      </div>
+    </div>
+  )
+}
+
+// Full-screen Reference Gallery
+function ReferenceGallery({ onClose, onSelectImage }) {
+  const [activeCategory, setActiveCategory] = useState('Exterior')
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.95)',
+      zIndex: 900,
+      display: 'flex',
+      flexDirection: 'column',
+      color: 'white',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '20px 30px',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 22 }}>Reference Images</h2>
+          <p style={{ margin: '5px 0 0 0', fontSize: 13, opacity: 0.6 }}>
+            Compare the 3D model with original reference images
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: 'none',
+            color: 'white',
+            fontSize: 16,
+            padding: '8px 16px',
+            borderRadius: 6,
+            cursor: 'pointer',
+          }}
+        >
+          Close (ESC)
+        </button>
+      </div>
+
+      {/* Category tabs */}
+      <div style={{
+        display: 'flex',
+        padding: '0 30px',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+      }}>
+        {Object.entries(REFERENCES).map(([category, data]) => (
+          <button
+            key={category}
+            onClick={() => setActiveCategory(category)}
+            style={{
+              background: activeCategory === category ? 'rgba(74, 111, 165, 0.8)' : 'transparent',
+              border: 'none',
+              color: 'white',
+              padding: '15px 25px',
+              cursor: 'pointer',
+              fontSize: 14,
+              borderBottom: activeCategory === category ? '2px solid #4a6fa5' : '2px solid transparent',
+              marginBottom: -1,
+            }}
+          >
+            {category}
+            <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 8 }}>
+              {Object.values(data.subcategories).flat().length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: 30,
+      }}>
+        <p style={{ margin: '0 0 20px 0', fontSize: 14, opacity: 0.7 }}>
+          {REFERENCES[activeCategory].description}
+        </p>
+
+        {Object.entries(REFERENCES[activeCategory].subcategories).map(([subcategory, images]) => (
+          <div key={subcategory} style={{ marginBottom: 30 }}>
+            <h4 style={{ margin: '0 0 15px 0', fontSize: 16, opacity: 0.8 }}>{subcategory}</h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: 15,
+            }}>
+              {images.map(image => (
+                <div
+                  key={image.file}
+                  onClick={() => onSelectImage({ ...image, category: activeCategory, subcategory })}
+                  style={{
+                    aspectRatio: '4/3',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    background: '#1a1a1a',
+                  }}
+                >
+                  <img
+                    src={image.file}
+                    alt={image.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.2s',
+                    }}
+                    loading="lazy"
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.9))',
+                    padding: '25px 12px 12px 12px',
+                    fontSize: 13,
+                  }}>
+                    {image.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [selectedModel, setSelectedModel] = useState(0)
   const [isFirstPerson, setIsFirstPerson] = useState(false)
+  const [showReferencePanel, setShowReferencePanel] = useState(false)
+  const [showReferenceGallery, setShowReferenceGallery] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState(null)
 
   // Toggle mode with F key
   const toggleMode = useCallback(() => {
     setIsFirstPerson(prev => !prev)
   }, [])
 
+  // Toggle reference panel with R key, gallery with Shift+R
+  const toggleReferencePanel = useCallback(() => {
+    setShowReferencePanel(prev => !prev)
+  }, [])
+
+  const openReferenceGallery = useCallback(() => {
+    setShowReferencePanel(false)
+    setShowReferenceGallery(true)
+  }, [])
+
+  const handleImageSelect = useCallback((image) => {
+    setLightboxImage(image)
+  }, [])
+
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Don't handle keys when lightbox or gallery is open (they handle their own keys)
+      if (lightboxImage) return
+
       if (e.code === 'KeyF' && !e.repeat) {
         toggleMode()
+      }
+      if (e.code === 'KeyR' && !e.repeat) {
+        if (e.shiftKey) {
+          openReferenceGallery()
+        } else {
+          if (showReferenceGallery) {
+            setShowReferenceGallery(false)
+          } else {
+            toggleReferencePanel()
+          }
+        }
       }
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [toggleMode])
+  }, [toggleMode, toggleReferencePanel, openReferenceGallery, showReferenceGallery, lightboxImage])
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -541,7 +1101,10 @@ export default function App() {
         </select>
 
         <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.7 }}>
-          {isFirstPerson ? 'Drag to rotate | Scroll to zoom' : 'WASD to move | Mouse to look'}
+          {isFirstPerson ? 'WASD to move | Mouse to look' : 'Drag to rotate | Scroll to zoom'}
+        </p>
+        <p style={{ margin: '8px 0 0 0', fontSize: 11, opacity: 0.5 }}>
+          Press <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: 3 }}>R</span> for references
         </p>
       </div>
 
@@ -590,6 +1153,33 @@ export default function App() {
             Click to enable mouse look
           </p>
         </div>
+      )}
+
+      {/* Reference Panel - Bottom right */}
+      {showReferencePanel && !showReferenceGallery && (
+        <ReferencePanel
+          onClose={() => setShowReferencePanel(false)}
+          onOpenGallery={openReferenceGallery}
+          onSelectImage={handleImageSelect}
+        />
+      )}
+
+      {/* Reference Gallery - Full screen modal */}
+      {showReferenceGallery && (
+        <ReferenceGallery
+          onClose={() => setShowReferenceGallery(false)}
+          onSelectImage={handleImageSelect}
+        />
+      )}
+
+      {/* Lightbox - Full screen image viewer */}
+      {lightboxImage && (
+        <Lightbox
+          image={lightboxImage}
+          allImages={ALL_REFERENCES}
+          onClose={() => setLightboxImage(null)}
+          onNavigate={setLightboxImage}
+        />
       )}
     </div>
   )
