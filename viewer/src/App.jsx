@@ -207,8 +207,9 @@ function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
     for (const { dir } of directions) {
       const { closest } = checkCollision(dir, PUSH_BACK_DISTANCE)
       if (closest < PUSH_BACK_DISTANCE) {
-        // Push back away from wall
-        const pushBack = dir.clone().negate().multiplyScalar(0.05)
+        // Push back away from wall - stronger push to prevent getting stuck
+        const pushStrength = Math.max(0.1, (PUSH_BACK_DISTANCE - closest) * 0.5)
+        const pushBack = dir.clone().negate().multiplyScalar(pushStrength)
         camera.position.add(pushBack)
       }
     }
@@ -218,8 +219,8 @@ function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
 
     // Forward/backward
     if (forward || backward) {
-      const moveDir = forward ? cameraDirection.clone().negate() : cameraDirection.clone()
-      const { blocked } = checkCollision(forward ? cameraDirection : cameraDirection.clone().negate())
+      const moveDir = forward ? cameraDirection.clone() : cameraDirection.clone().negate()
+      const { blocked } = checkCollision(moveDir.clone())
       if (!blocked) {
         camera.position.add(moveDir.multiplyScalar(moveSpeed))
       }
