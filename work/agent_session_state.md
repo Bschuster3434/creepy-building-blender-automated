@@ -1,8 +1,8 @@
 # Agent Session State - Project Progress Tracker
 
 **Last Updated**: 2026-01-07
-**Current Phase**: Pre-Phase 2 Preparation
-**Current Status**: Object Organization Complete, Door Animation Setup In Progress
+**Current Phase**: Phase 2 - Materials
+**Current Status**: Geometry Frozen, Ready for Materials
 
 ---
 
@@ -12,7 +12,7 @@
 |-------|-------------|--------|-----------------|
 | Phase 1A | Base Structure with Cutouts | COMPLETED | 2026-01-03 |
 | Phase 1B | Opening Fill (Windows/Doors) | COMPLETED | 2026-01-06 |
-| Phase 1C | Interior Layout | COMPLETED | 2026-01-06 |
+| Phase 1C | Interior Layout + Window Fix | COMPLETED | 2026-01-07 |
 | Pre-Phase 2 | Object Organization | COMPLETED | 2026-01-07 |
 | Pre-Phase 2 | Door Animation Prep | COMPLETED | 2026-01-07 |
 | Phase 2 | Materials & Textures | PENDING | - |
@@ -127,8 +127,8 @@ Building/
 
 ### Phase 1C - Interior Layout (COMPLETED)
 
-**Final Iteration**: 006
-**Output**: `exports/glb/building_phase_1c_iter_006.glb`
+**Final Iteration**: 007
+**Output**: `exports/glb/building_phase_1c_iter_007.glb`
 
 **What was built**:
 - Interior floor (z=0.01)
@@ -136,9 +136,12 @@ Building/
 - Hallway walls (left and right, with door openings)
 - Storefront back wall
 - Interior door frames (6 jambs/headers for 2 doorways)
+- **Iter 007**: Matched front window glass widths (both 2.04m)
 
 **Specifications**:
 - `work/spec/phase_1c/interior_layout.yaml`
+
+**GEOMETRY FROZEN** - No further mesh changes allowed
 
 ---
 
