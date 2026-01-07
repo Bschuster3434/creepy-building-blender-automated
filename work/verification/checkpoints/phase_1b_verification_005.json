@@ -1,0 +1,88 @@
+{
+  "checkpoint": "phase_1b_verification_005",
+  "timestamp": "2026-01-05T20:36:38.878694",
+  "data": {
+    "iteration": 5,
+    "verification_results": [
+      {
+        "opening": "front_left_display_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "front_left_display_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "front_right_display_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "front_right_display_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "door_alcove_left_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "door_alcove_left_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "door_alcove_right_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "door_alcove_right_window",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "front_entry_door",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "front_entry_door",
+        "passed": true,
+        "errors": [],
+        "warnings": [
+          "Frame Z center (1.767m) may not match expected Z (1.335m)"
+        ]
+      },
+      {
+        "opening": "rear_service_door",
+        "passed": true,
+        "errors": [],
+        "warnings": []
+      },
+      {
+        "opening": "rear_service_door",
+        "passed": true,
+        "errors": [],
+        "warnings": [
+          "Frame Z center (1.387m) may not match expected Z (1.050m)"
+        ]
+      }
+    ],
+    "passed_count": 12,
+    "failed_count": 0,
+    "screenshots_dir": "C:\\Users\\brian\\Documents\\Blender\\Creepy Building Myrtle Beach Highway\\work\\verification\\phase_1b_iter_005"
+  }
+}
