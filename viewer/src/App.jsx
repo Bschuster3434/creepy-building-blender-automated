@@ -177,6 +177,17 @@ function Model({ url, onLoad, onDoorsFound }) {
 
         // Find door pivot objects (empties that control door rotation)
         if (name.includes('_Pivot') && nameLower.includes('door')) {
+          // Fix rear door pivot position - move to correct hinge edge
+          // The rear door pivot is centered but should be at the hinge (left edge)
+          if (name.includes('Rear_Service')) {
+            // Door is ~0.84m wide, pivot is centered, so offset by half width to left edge
+            child.position.x += 0.42
+            // Also need to offset all children back so door stays in place
+            child.children.forEach(c => {
+              c.position.x -= 0.42
+            })
+          }
+
           doorPivots.push({
             name: name,
             object: child,
@@ -189,7 +200,7 @@ function Model({ url, onLoad, onDoorsFound }) {
             // Open direction: positive = outward swing
             openAngle: name.includes('Front_Entry_Door_Left') ? Math.PI / 2 :
                        name.includes('Front_Entry_Door_Right') ? -Math.PI / 2 :
-                       name.includes('Rear_Service') ? Math.PI / 2 : Math.PI / 2,
+                       name.includes('Rear_Service') ? -Math.PI / 2 : Math.PI / 2,
           })
         }
 
