@@ -1,6 +1,6 @@
 import React, { Suspense, useState, useRef, useEffect, useCallback } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, useGLTF, Environment, Grid, PointerLockControls } from '@react-three/drei'
+import { OrbitControls, useGLTF, Sky, PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
 
 const MODELS = {
@@ -137,24 +137,60 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
     }
   }, [isFirstPerson, camera])
 
+  // Sun position for natural daylight (late morning sun)
+  const sunPosition = [50, 30, 50]
+
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
-      <directionalLight position={[-10, 10, -5]} intensity={0.5} />
+      {/* Natural daylight lighting */}
+      <ambientLight intensity={0.4} color="#87CEEB" />
+      <directionalLight
+        position={sunPosition}
+        intensity={1.5}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-far={100}
+        shadow-camera-left={-30}
+        shadow-camera-right={30}
+        shadow-camera-top={30}
+        shadow-camera-bottom={-30}
+        color="#FFF5E1"
+      />
+      <hemisphereLight
+        skyColor="#87CEEB"
+        groundColor="#3d5c3d"
+        intensity={0.5}
+      />
 
       <Suspense fallback={null}>
         <Model url={modelUrl} />
       </Suspense>
 
-      <Grid
-        infiniteGrid
-        cellSize={1}
-        sectionSize={5}
-        fadeDistance={50}
-        cellColor="#666666"
-        sectionColor="#888888"
+      {/* Realistic sky */}
+      <Sky
+        distance={450000}
+        sunPosition={sunPosition}
+        inclination={0.6}
+        azimuth={0.25}
+        mieCoefficient={0.005}
+        mieDirectionalG={0.8}
+        rayleigh={0.5}
+        turbidity={10}
       />
+
+      {/* Grass ground plane */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.01, 0]}
+        receiveShadow
+      >
+        <planeGeometry args={[200, 200]} />
+        <meshStandardMaterial
+          color="#4a7c3f"
+          roughness={0.9}
+          metalness={0}
+        />
+      </mesh>
 
       {isFirstPerson ? (
         <>
@@ -172,8 +208,6 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
           target={[0, 5, 0]}
         />
       )}
-
-      <Environment preset="city" />
     </>
   )
 }
@@ -202,7 +236,7 @@ export default function App() {
       <Canvas
         shadows
         camera={{ position: [20, 15, 20], fov: 50 }}
-        style={{ background: '#1a1a2e' }}
+        style={{ background: 'linear-gradient(to bottom, #87CEEB, #E0F6FF)' }}
       >
         <Scene
           modelUrl={ALL_MODELS[selectedModel].file}
