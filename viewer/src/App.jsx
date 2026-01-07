@@ -82,11 +82,10 @@ function Model({ url, onLoad }) {
 function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
   const { camera } = useThree()
   const moveState = useRef({ forward: false, backward: false, left: false, right: false })
-  const velocity = useRef(new THREE.Vector3())
-  const direction = useRef(new THREE.Vector3())
   const raycaster = useRef(new THREE.Raycaster())
 
-  const COLLISION_DISTANCE = 1.0 // How close before stopping
+  const COLLISION_DISTANCE = 1.5 // How close before stopping
+  const PUSH_BACK_DISTANCE = 0.8 // If closer than this, push back
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -113,35 +112,32 @@ function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
     }
   }, [])
 
-  // Check collision in a given direction
-  const checkCollision = (directionVec) => {
-    if (collisionMeshes.length === 0) return false
+  // Check collision in a given direction at multiple heights
+  const checkCollision = (directionVec, distance = COLLISION_DISTANCE) => {
+    if (collisionMeshes.length === 0) return { blocked: false, closest: Infinity }
 
-    raycaster.current.set(camera.position, directionVec.normalize())
-    const intersects = raycaster.current.intersectObjects(collisionMeshes, true)
+    const heights = [0.3, 0.8, 1.4] // Check at knee, waist, chest height
+    let closestDist = Infinity
 
-    return intersects.length > 0 && intersects[0].distance < COLLISION_DISTANCE
+    for (const heightOffset of heights) {
+      const rayOrigin = camera.position.clone()
+      rayOrigin.y = heightOffset
+
+      raycaster.current.set(rayOrigin, directionVec.clone().normalize())
+      const intersects = raycaster.current.intersectObjects(collisionMeshes, true)
+
+      if (intersects.length > 0 && intersects[0].distance < closestDist) {
+        closestDist = intersects[0].distance
+      }
+    }
+
+    return { blocked: closestDist < distance, closest: closestDist }
   }
 
   useFrame((_, delta) => {
     const { forward, backward, left, right } = moveState.current
 
-    direction.current.z = Number(forward) - Number(backward)
-    direction.current.x = Number(right) - Number(left)
-    direction.current.normalize()
-
-    // Calculate intended movement
-    let moveX = 0
-    let moveZ = 0
-
-    if (forward || backward) {
-      moveZ = direction.current.z * speed * delta
-    }
-    if (left || right) {
-      moveX = direction.current.x * speed * delta
-    }
-
-    // Get world direction for collision checks
+    // Get world directions
     const cameraDirection = new THREE.Vector3()
     camera.getWorldDirection(cameraDirection)
     cameraDirection.y = 0
@@ -150,27 +146,46 @@ function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
     const cameraRight = new THREE.Vector3()
     cameraRight.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0))
 
-    // Check forward/backward collision
-    if (moveZ !== 0) {
-      const moveDir = cameraDirection.clone().multiplyScalar(moveZ > 0 ? -1 : 1)
-      if (!checkCollision(moveDir)) {
-        camera.translateZ(-moveZ)
+    // Check all 4 directions and push back if too close
+    const directions = [
+      { dir: cameraDirection.clone(), name: 'forward' },
+      { dir: cameraDirection.clone().negate(), name: 'backward' },
+      { dir: cameraRight.clone(), name: 'right' },
+      { dir: cameraRight.clone().negate(), name: 'left' },
+    ]
+
+    for (const { dir } of directions) {
+      const { closest } = checkCollision(dir, PUSH_BACK_DISTANCE)
+      if (closest < PUSH_BACK_DISTANCE) {
+        // Push back away from wall
+        const pushBack = dir.clone().negate().multiplyScalar(0.05)
+        camera.position.add(pushBack)
       }
     }
 
-    // Check left/right collision
-    if (moveX !== 0) {
-      const moveDir = cameraRight.clone().multiplyScalar(moveX > 0 ? 1 : -1)
-      if (!checkCollision(moveDir)) {
-        camera.translateX(moveX)
+    // Calculate intended movement
+    const moveSpeed = speed * delta
+
+    // Forward/backward
+    if (forward || backward) {
+      const moveDir = forward ? cameraDirection.clone().negate() : cameraDirection.clone()
+      const { blocked } = checkCollision(forward ? cameraDirection : cameraDirection.clone().negate())
+      if (!blocked) {
+        camera.position.add(moveDir.multiplyScalar(moveSpeed))
+      }
+    }
+
+    // Left/right
+    if (left || right) {
+      const moveDir = right ? cameraRight.clone() : cameraRight.clone().negate()
+      const { blocked } = checkCollision(right ? cameraRight : cameraRight.clone().negate())
+      if (!blocked) {
+        camera.position.add(moveDir.multiplyScalar(moveSpeed))
       }
     }
 
     // Keep camera at eye level
     camera.position.y = 1.7
-
-    velocity.current.x *= 0.9
-    velocity.current.z *= 0.9
   })
 
   return null
