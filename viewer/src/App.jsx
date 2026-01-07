@@ -4,8 +4,13 @@ import { OrbitControls, useGLTF, Sky, PointerLockControls } from '@react-three/d
 import * as THREE from 'three'
 
 const MODELS = {
+  'Phase 2 (Materials)': [
+    { name: 'Phase 2 - Iter 006 (Latest)', file: '/building_phase_2_iter_006.glb' },
+    { name: 'Phase 2 - Iter 001', file: '/building_phase_2_iter_001.glb' },
+    { name: 'Phase 1C - Iter 007 (With Door Pivots)', file: '/building_phase_1c_iter_007.glb' },
+  ],
   'Phase 1C (Interior)': [
-    { name: 'Phase 1C - Iter 006 (Latest)', file: '/building_phase_1c_iter_006.glb' },
+    { name: 'Phase 1C - Iter 006', file: '/building_phase_1c_iter_006.glb' },
     { name: 'Phase 1C - Iter 005', file: '/building_phase_1c_iter_005.glb' },
     { name: 'Phase 1C - Iter 004', file: '/building_phase_1c_iter_004.glb' },
     { name: 'Phase 1C - Iter 003', file: '/building_phase_1c_iter_003.glb' },
@@ -158,18 +163,38 @@ const ALL_REFERENCES = Object.entries(REFERENCES).flatMap(([category, data]) =>
   )
 )
 
-function Model({ url, onLoad }) {
+function Model({ url, onLoad, onDoorsFound }) {
   const { scene } = useGLTF(url)
 
   useEffect(() => {
-    if (onLoad && scene) {
+    if (scene) {
       // Collect all meshes for collision detection, hide Cutter objects
       const collisionMeshes = []
-      scene.traverse((child) => {
-        if (child.isMesh) {
-          const name = child.name || ''
-          const nameLower = name.toLowerCase()
+      const doorPivots = []
 
+      scene.traverse((child) => {
+        const name = child.name || ''
+        const nameLower = name.toLowerCase()
+
+        // Find door pivot objects (empties that control door rotation)
+        if (name.includes('_Pivot') && nameLower.includes('door')) {
+          doorPivots.push({
+            name: name,
+            object: child,
+            isOpen: false,
+            targetRotation: 0,
+            // Determine door type and open direction
+            type: name.includes('Front_Entry_Door_Left') ? 'front_left' :
+                  name.includes('Front_Entry_Door_Right') ? 'front_right' :
+                  name.includes('Rear_Service') ? 'rear' : 'unknown',
+            // Open direction: positive = outward swing
+            openAngle: name.includes('Front_Entry_Door_Left') ? Math.PI / 2 :
+                       name.includes('Front_Entry_Door_Right') ? -Math.PI / 2 :
+                       name.includes('Rear_Service') ? Math.PI / 2 : Math.PI / 2,
+          })
+        }
+
+        if (child.isMesh) {
           // Hide Boolean modifier cutter objects (used for window/door cutouts)
           if (name.includes('Cutter') || name.includes('_Cutter')) {
             child.visible = false
@@ -183,9 +208,15 @@ function Model({ url, onLoad }) {
           }
         }
       })
-      onLoad(collisionMeshes)
+
+      if (onLoad) {
+        onLoad(collisionMeshes)
+      }
+      if (onDoorsFound && doorPivots.length > 0) {
+        onDoorsFound(doorPivots)
+      }
     }
-  }, [scene, onLoad])
+  }, [scene, onLoad, onDoorsFound])
 
   return <primitive object={scene} />
 }
@@ -361,11 +392,105 @@ function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
   return null
 }
 
-function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
+// Door animation controller - handles proximity detection and smooth rotation
+function DoorController({ doors, isFirstPerson, onNearDoorChange }) {
+  const { camera } = useThree()
+  const doorStates = useRef({})
+  const INTERACTION_DISTANCE = 3.0 // How close to interact with door
+
+  // Initialize door states
+  useEffect(() => {
+    doors.forEach(door => {
+      if (!doorStates.current[door.name]) {
+        doorStates.current[door.name] = {
+          isOpen: false,
+          currentRotation: 0,
+          targetRotation: 0,
+          openAngle: door.openAngle,
+        }
+      }
+    })
+  }, [doors])
+
+  // Handle E key to toggle nearest door
+  useEffect(() => {
+    if (!isFirstPerson) return
+
+    const handleKeyDown = (e) => {
+      if (e.code === 'KeyE' && !e.repeat) {
+        // Find nearest door within interaction distance
+        let nearestDoor = null
+        let nearestDist = Infinity
+
+        doors.forEach(door => {
+          const doorPos = new THREE.Vector3()
+          door.object.getWorldPosition(doorPos)
+          const dist = camera.position.distanceTo(doorPos)
+          if (dist < INTERACTION_DISTANCE && dist < nearestDist) {
+            nearestDist = dist
+            nearestDoor = door
+          }
+        })
+
+        if (nearestDoor) {
+          const state = doorStates.current[nearestDoor.name]
+          state.isOpen = !state.isOpen
+          state.targetRotation = state.isOpen ? state.openAngle : 0
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [doors, camera, isFirstPerson])
+
+  // Animate doors and detect proximity
+  useFrame((_, delta) => {
+    let nearestDoorName = null
+    let nearestDist = Infinity
+
+    doors.forEach(door => {
+      const state = doorStates.current[door.name]
+      if (!state) return
+
+      // Smooth rotation animation
+      const rotationSpeed = 3.0 // radians per second
+      const diff = state.targetRotation - state.currentRotation
+      if (Math.abs(diff) > 0.01) {
+        const step = Math.sign(diff) * Math.min(Math.abs(diff), rotationSpeed * delta)
+        state.currentRotation += step
+        door.object.rotation.y = state.currentRotation
+      }
+
+      // Check proximity for UI feedback (only in first-person)
+      if (isFirstPerson) {
+        const doorPos = new THREE.Vector3()
+        door.object.getWorldPosition(doorPos)
+        const dist = camera.position.distanceTo(doorPos)
+        if (dist < INTERACTION_DISTANCE && dist < nearestDist) {
+          nearestDist = dist
+          nearestDoorName = door.type === 'front_left' ? 'Front Left Door' :
+                           door.type === 'front_right' ? 'Front Right Door' :
+                           door.type === 'rear' ? 'Rear Service Door' : 'Door'
+        }
+      }
+    })
+
+    // Report nearest door for UI
+    if (onNearDoorChange) {
+      onNearDoorChange(nearestDoorName)
+    }
+  })
+
+  return null
+}
+
+function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange }) {
   const controlsRef = useRef()
   const { camera } = useThree()
   const [buildingMeshes, setBuildingMeshes] = useState([])
   const [treeMeshes, setTreeMeshes] = useState([])
+  const [doorPivots, setDoorPivots] = useState([])
 
   // Combine building and tree meshes for collision
   const collisionMeshes = useMemo(() => {
@@ -383,6 +508,11 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
       if (prev.includes(mesh)) return prev
       return [...prev, mesh]
     })
+  }, [])
+
+  // Handle door pivots found in model
+  const handleDoorsFound = useCallback((doors) => {
+    setDoorPivots(doors)
   }, [])
 
   // Position camera for first-person view (in front of building, looking at it)
@@ -421,8 +551,17 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
       />
 
       <Suspense fallback={null}>
-        <Model url={modelUrl} onLoad={handleModelLoad} />
+        <Model url={modelUrl} onLoad={handleModelLoad} onDoorsFound={handleDoorsFound} />
       </Suspense>
+
+      {/* Door animation controller */}
+      {doorPivots.length > 0 && (
+        <DoorController
+          doors={doorPivots}
+          isFirstPerson={isFirstPerson}
+          onNearDoorChange={onNearDoorChange}
+        />
+      )}
 
       {/* Realistic sky */}
       <Sky
@@ -998,6 +1137,7 @@ export default function App() {
   const [showReferencePanel, setShowReferencePanel] = useState(false)
   const [showReferenceGallery, setShowReferenceGallery] = useState(false)
   const [lightboxImage, setLightboxImage] = useState(null)
+  const [nearDoor, setNearDoor] = useState(null)
 
   // Toggle mode with F key
   const toggleMode = useCallback(() => {
@@ -1053,6 +1193,7 @@ export default function App() {
           modelUrl={ALL_MODELS[selectedModel].file}
           isFirstPerson={isFirstPerson}
           onExitFirstPerson={() => setIsFirstPerson(false)}
+          onNearDoorChange={setNearDoor}
         />
       </Canvas>
 
@@ -1151,6 +1292,38 @@ export default function App() {
           </p>
           <p style={{ margin: '5px 0 0 0', fontSize: 11, opacity: 0.7 }}>
             Click to enable mouse look
+          </p>
+        </div>
+      )}
+
+      {/* Door Interaction Indicator */}
+      {isFirstPerson && nearDoor && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(0, 0, 0, 0.8)',
+          padding: '15px 25px',
+          borderRadius: 8,
+          color: 'white',
+          textAlign: 'center',
+          border: '2px solid rgba(74, 111, 165, 0.8)',
+          pointerEvents: 'none',
+        }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
+            {nearDoor}
+          </p>
+          <p style={{ margin: '8px 0 0 0', fontSize: 13 }}>
+            Press <span style={{
+              background: 'rgba(74, 111, 165, 0.8)',
+              padding: '3px 10px',
+              borderRadius: 4,
+              fontFamily: 'monospace',
+              fontWeight: 'bold',
+              marginLeft: 4,
+              marginRight: 4,
+            }}>E</span> to open/close
           </p>
         </div>
       )}
