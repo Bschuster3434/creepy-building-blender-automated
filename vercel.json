@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "name": "creepy-building-viewer",
+  "buildCommand": "cd viewer && npm install && npm run build",
+  "outputDirectory": "viewer/dist",
+  "installCommand": "cd viewer && npm install",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
