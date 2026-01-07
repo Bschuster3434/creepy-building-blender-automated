@@ -64,13 +64,50 @@ function Model({ url, onLoad }) {
 
   useEffect(() => {
     if (onLoad && scene) {
-      // Collect all meshes for collision detection
+      // Collect all meshes for collision detection (excluding doors)
       const collisionMeshes = []
+      const doorMeshes = []
+
       scene.traverse((child) => {
         if (child.isMesh) {
-          collisionMeshes.push(child)
+          const name = child.name.toLowerCase()
+          // Check if this is a door mesh
+          if (name.includes('door')) {
+            doorMeshes.push(child)
+          } else {
+            collisionMeshes.push(child)
+          }
         }
       })
+
+      // Open the French doors - rotate around their hinge points
+      doorMeshes.forEach((door) => {
+        const name = door.name.toLowerCase()
+        // Determine which way to swing based on position or name
+        // French doors: left door swings left (positive Y), right door swings right (negative Y)
+        const isLeftDoor = name.includes('left') || door.position.x < 0
+        const swingAngle = Math.PI * 0.45 // ~80 degrees open
+
+        // For proper hinge rotation, we need to translate to hinge, rotate, translate back
+        // Get the door's bounding box to find its width
+        const box = new THREE.Box3().setFromObject(door)
+        const doorWidth = box.max.x - box.min.x
+
+        if (isLeftDoor) {
+          // Left door: hinge on left side, swing outward (positive rotation)
+          door.position.x -= doorWidth / 2
+          door.rotation.y += swingAngle
+          door.position.x += (doorWidth / 2) * Math.cos(swingAngle)
+          door.position.z += (doorWidth / 2) * Math.sin(swingAngle)
+        } else {
+          // Right door: hinge on right side, swing outward (negative rotation)
+          door.position.x += doorWidth / 2
+          door.rotation.y -= swingAngle
+          door.position.x -= (doorWidth / 2) * Math.cos(swingAngle)
+          door.position.z += (doorWidth / 2) * Math.sin(swingAngle)
+        }
+      })
+
       onLoad(collisionMeshes)
     }
   }, [scene, onLoad])
