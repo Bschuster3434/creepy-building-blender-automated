@@ -13,9 +13,9 @@ const MODELS = {
     { name: 'Phase 2 - Iter 003', file: '/building_phase_2_iter_003.glb' },
     { name: 'Phase 2 - Iter 002', file: '/building_phase_2_iter_002.glb' },
     { name: 'Phase 2 - Iter 001', file: '/building_phase_2_iter_001.glb' },
-    { name: 'Phase 1C - Iter 007 (With Door Pivots)', file: '/building_phase_1c_iter_007.glb' },
   ],
   'Phase 1C (Interior)': [
+    { name: 'Phase 1C - Iter 007 (Latest)', file: '/building_phase_1c_iter_007.glb' },
     { name: 'Phase 1C - Iter 006', file: '/building_phase_1c_iter_006.glb' },
     { name: 'Phase 1C - Iter 005', file: '/building_phase_1c_iter_005.glb' },
     { name: 'Phase 1C - Iter 004', file: '/building_phase_1c_iter_004.glb' },
