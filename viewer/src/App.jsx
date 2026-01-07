@@ -105,10 +105,17 @@ function Model({ url, onLoad }) {
       scene.traverse((child) => {
         if (child.isMesh) {
           const name = child.name || ''
+          const nameLower = name.toLowerCase()
+
           // Hide Boolean modifier cutter objects (used for window/door cutouts)
           if (name.includes('Cutter') || name.includes('_Cutter')) {
             child.visible = false
-          } else {
+          }
+          // Exclude door objects from collision (so player can walk through)
+          else if (nameLower.includes('door')) {
+            // Door is visible but not collidable - don't add to collision meshes
+          }
+          else {
             collisionMeshes.push(child)
           }
         }
