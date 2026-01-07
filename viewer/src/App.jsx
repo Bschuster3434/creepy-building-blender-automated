@@ -178,16 +178,60 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson }) {
         turbidity={10}
       />
 
-      {/* Grass ground plane */}
+      {/* Ground System - layered for realism */}
+
+      {/* Base grass field */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.01, 0]}
+        position={[0, -0.02, 0]}
         receiveShadow
       >
-        <planeGeometry args={[200, 200]} />
+        <planeGeometry args={[150, 150]} />
         <meshStandardMaterial
-          color="#4a7c3f"
-          roughness={0.9}
+          color="#5a7a4a"
+          roughness={1}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Concrete/asphalt parking pad in front of building */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.01, 8]}
+        receiveShadow
+      >
+        <planeGeometry args={[25, 12]} />
+        <meshStandardMaterial
+          color="#8a8a8a"
+          roughness={0.95}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Worn dirt/gravel transition around concrete */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.015, 8]}
+        receiveShadow
+      >
+        <planeGeometry args={[30, 16]} />
+        <meshStandardMaterial
+          color="#7a7060"
+          roughness={1}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Road strip at front */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.005, 20]}
+        receiveShadow
+      >
+        <planeGeometry args={[80, 8]} />
+        <meshStandardMaterial
+          color="#3a3a3a"
+          roughness={0.8}
           metalness={0}
         />
       </mesh>
