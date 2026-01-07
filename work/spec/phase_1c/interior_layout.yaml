@@ -1,0 +1,201 @@
+# Phase 1C - Interior Layout Specification
+# Floor, ceiling, and partition walls
+#
+# CRITICAL CONSTRAINTS:
+# - Phase 1A/1B geometry is FROZEN - no modifications allowed
+# - Interior walls extend fully to ceiling
+# - Clean basic structure (no damage/decay)
+# - Open hallway all the way to back (no doors)
+# - Placeholder colors only (no materials/textures)
+
+phase: 1C
+status: in_progress
+description: "Add interior floor, ceiling, and partition walls"
+
+# Building reference (from Phase 1A)
+building_reference:
+  width: 8.5                    # X-axis (left-right)
+  depth: 15.0                   # Y-axis (front-back)
+  wall_height: 3.75             # Exterior wall height
+  wall_thickness: 0.18          # Exterior wall thickness
+  front_y: -7.5                 # Front facade Y position
+  back_y: 7.5                   # Back wall Y position
+  left_x: -4.25                 # Left wall X position
+  right_x: 4.25                 # Right wall X position
+
+# Interior dimensions (accounting for exterior wall thickness)
+interior_dimensions:
+  width: 8.14                   # 8.5 - 2×0.18
+  depth: 14.64                  # 15.0 - 2×0.18
+  left_x: -4.07                 # -4.25 + 0.18
+  right_x: 4.07                 # 4.25 - 0.18
+  front_y: -7.32                # -7.5 + 0.18
+  back_y: 7.32                  # 7.5 - 0.18
+  height: 3.60                  # Floor to ceiling
+
+# Phase 1C placeholder colors
+phase_1c_colors:
+  floor: "#8B7355"              # Medium brown (wood floor)
+  ceiling: "#F5F5DC"            # Off-white/beige
+  interior_walls: "#D3D3D3"     # Light gray
+
+# Interior partition wall specifications
+partition_walls:
+  thickness: 0.10               # Interior walls thinner than exterior
+  height: 3.60                  # Floor to ceiling (full height)
+
+# Floor specification
+floor:
+  z_position: 0.01              # Slightly above ground to prevent z-fighting
+  thickness: 0.02               # Floor thickness (for solid geometry)
+  color: "#8B7355"
+
+# Ceiling specification
+ceiling:
+  z_position: 3.58              # Slightly below roof structure
+  thickness: 0.02               # Ceiling thickness
+  color: "#F5F5DC"
+
+# Room layout (based on floor plan reference)
+# Coordinate system: X=left-right, Y=front-back (front is -Y)
+rooms:
+  open_storefront:
+    description: "Large open retail area at front-left"
+    bounds:
+      x_min: -4.07              # Interior left edge
+      x_max: 0.0                # Center of building
+      y_min: -7.32              # Interior front edge
+      y_max: -1.0               # Storefront/hallway boundary
+
+  hallway:
+    description: "Open hallway running front to back"
+    width: 2.0                  # Hallway width
+    center_x: 1.0               # Hallway centered at x=1.0
+    bounds:
+      x_min: 0.0                # Left edge of hallway
+      x_max: 2.0                # Right edge of hallway
+      y_min: -7.32              # From front
+      y_max: 7.32               # To back (open all the way)
+
+  room_1:
+    description: "Back right room (smaller)"
+    bounds:
+      x_min: 2.0                # Right of hallway
+      x_max: 4.07               # Interior right edge
+      y_min: 3.5                # Back portion
+      y_max: 7.32               # Interior back edge
+    doorway:
+      wall: left                # Door on hallway side
+      width: 0.9                # Standard interior door width
+      position_y: 5.0           # Centered on room
+
+  room_2:
+    description: "Back right room (adjacent to room 1)"
+    bounds:
+      x_min: 2.0                # Right of hallway
+      x_max: 4.07               # Interior right edge
+      y_min: 0.0                # Middle section
+      y_max: 3.5                # Up to room 1
+    doorway:
+      wall: left                # Door on hallway side
+      width: 0.9                # Standard interior door width
+      position_y: 1.75          # Centered on room
+
+  back_storage:
+    description: "Back left storage/utility area"
+    bounds:
+      x_min: -4.07              # Interior left edge
+      x_max: 0.0                # Up to hallway
+      y_min: -1.0               # Behind storefront
+      y_max: 7.32               # To back wall
+
+# Partition wall segments (defining the interior divisions)
+wall_segments:
+  # Storefront/hallway divider (horizontal wall running left-right)
+  storefront_back_wall:
+    start_x: -4.07              # From interior left edge
+    end_x: 0.0                  # To hallway edge
+    y_position: -1.0            # Behind storefront area
+    height: 3.60
+    thickness: 0.10
+    doorway: false              # Solid wall (opens to hallway from storefront)
+
+  # Hallway left wall (vertical wall running front-back)
+  hallway_left_wall:
+    x_position: 0.0             # Left edge of hallway
+    start_y: -1.0               # From storefront divider
+    end_y: 7.32                 # To back wall
+    height: 3.60
+    thickness: 0.10
+    doorway: false              # Open hallway
+
+  # Hallway right wall (vertical wall running front-back)
+  hallway_right_wall:
+    x_position: 2.0             # Right edge of hallway
+    start_y: -1.0               # From front area
+    end_y: 7.32                 # To back wall
+    height: 3.60
+    thickness: 0.10
+    doorways:
+      - position_y: 1.75        # Door to room 2
+        width: 0.9
+        height: 2.1
+      - position_y: 5.0         # Door to room 1
+        width: 0.9
+        height: 2.1
+
+  # Room 1/Room 2 divider (horizontal wall)
+  room_divider:
+    start_x: 2.0                # From hallway wall
+    end_x: 4.07                 # To exterior wall
+    y_position: 3.5             # Between rooms
+    height: 3.60
+    thickness: 0.10
+    doorway: false              # Solid wall between rooms
+
+  # Back storage wall (vertical wall on left side of back)
+  back_storage_wall:
+    x_position: 0.0             # At hallway edge
+    start_y: -1.0               # From storefront divider
+    end_y: 7.32                 # Note: This shares with hallway_left_wall
+    # This is the same wall as hallway_left_wall, no separate segment needed
+    already_defined: true
+
+# Interior doorways (openings in partition walls)
+doorways:
+  room_2_door:
+    wall: hallway_right_wall
+    position_y: 1.75            # Center of opening
+    width: 0.9
+    height: 2.1
+    z_bottom: 0.01              # At floor level
+
+  room_1_door:
+    wall: hallway_right_wall
+    position_y: 5.0             # Center of opening
+    width: 0.9
+    height: 2.1
+    z_bottom: 0.01              # At floor level
+
+# Validation requirements
+validation:
+  phase_1a_preservation:
+    check_exterior_unchanged: true
+  geometry_quality:
+    manifold_check: true
+    no_overlapping_faces: true
+
+# Export settings
+export:
+  format: glb
+  naming: "building_phase_1c_iter_{iteration:03d}.glb"
+  output_dir: "exports/glb"
+
+notes: |
+  Phase 1C adds interior geometry:
+  - Floor covering entire interior
+  - Ceiling covering entire interior
+  - Partition walls dividing spaces
+  - All walls extend fully to ceiling
+  - Clean structure (no damage/decay)
+  - Open hallway from front to back (no doors blocking passage)

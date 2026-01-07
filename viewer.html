@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creepy Building - First Person Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 100;
+        }
+        #instructions.hidden {
+            display: none;
+        }
+        #controls-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+        }
+        #loading.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">Loading building model...</div>
+
+    <div id="instructions">
+        <h2>First Person Viewer</h2>
+        <p><strong>Click to start</strong></p>
+        <p style="margin-top: 20px; font-size: 14px;">
+            WASD - Move<br>
+            Mouse - Look around<br>
+            ESC - Release mouse
+        </p>
+    </div>
+
+    <div id="controls-info">
+        <strong>Controls:</strong><br>
+        W/A/S/D - Move<br>
+        Mouse - Look around<br>
+        ESC - Release mouse<br>
+        Shift - Move faster
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb); // Sky blue
+        scene.fog = new THREE.Fog(0x87ceeb, 0, 100); // Atmospheric fog
+
+        // Camera (eye level at 1.7m)
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        const EYE_HEIGHT = 1.7;
+        camera.position.set(0, EYE_HEIGHT, -15); // Start in front of building
+
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        // Pointer Lock Controls (first-person mouse look)
+        const controls = new PointerLockControls(camera, renderer.domElement);
+
+        const instructionsDiv = document.getElementById('instructions');
+        const loadingDiv = document.getElementById('loading');
+
+        instructionsDiv.addEventListener('click', () => {
+            controls.lock();
+        });
+
+        controls.addEventListener('lock', () => {
+            instructionsDiv.classList.add('hidden');
+        });
+
+        controls.addEventListener('unlock', () => {
+            instructionsDiv.classList.remove('hidden');
+        });
+
+        scene.add(controls.getObject());
+
+        // Movement variables
+        const moveSpeed = 5.0; // meters per second
+        const sprintMultiplier = 2.0;
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+
+        const moveState = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            sprint: false
+        };
+
+        // Keyboard controls
+        document.addEventListener('keydown', (event) => {
+            switch (event.code) {
+                case 'KeyW':
+                    moveState.forward = true;
+                    break;
+                case 'KeyS':
+                    moveState.backward = true;
+                    break;
+                case 'KeyA':
+                    moveState.left = true;
+                    break;
+                case 'KeyD':
+                    moveState.right = true;
+                    break;
+                case 'ShiftLeft':
+                case 'ShiftRight':
+                    moveState.sprint = true;
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            switch (event.code) {
+                case 'KeyW':
+                    moveState.forward = false;
+                    break;
+                case 'KeyS':
+                    moveState.backward = false;
+                    break;
+                case 'KeyA':
+                    moveState.left = false;
+                    break;
+                case 'KeyD':
+                    moveState.right = false;
+                    break;
+                case 'ShiftLeft':
+                case 'ShiftRight':
+                    moveState.sprint = false;
+                    break;
+            }
+        });
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(20, 30, 10);
+        sunLight.castShadow = true;
+        sunLight.shadow.camera.left = -30;
+        sunLight.shadow.camera.right = 30;
+        sunLight.shadow.camera.top = 30;
+        sunLight.shadow.camera.bottom = -30;
+        sunLight.shadow.camera.near = 0.1;
+        sunLight.shadow.camera.far = 100;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        scene.add(sunLight);
+
+        // Ground plane
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3a5f3a,
+            roughness: 0.8
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Grid helper (optional, for spatial reference)
+        const gridHelper = new THREE.GridHelper(100, 100, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // Load GLB model
+        const loader = new GLTFLoader();
+        loader.load(
+            'exports/glb/building_phase_1b_iter_016.glb',
+
+            // onLoad callback
+            (gltf) => {
+                const building = gltf.scene;
+
+                // Raise building slightly so foundation is visible above ground
+                building.position.y = 0.1;
+
+                // Enable shadows
+                building.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                scene.add(building);
+                loadingDiv.classList.add('hidden');
+                console.log('Building loaded successfully!');
+            },
+
+            // onProgress callback
+            (xhr) => {
+                const percentComplete = (xhr.loaded / xhr.total * 100).toFixed(1);
+                loadingDiv.textContent = `Loading building model... ${percentComplete}%`;
+                console.log(percentComplete + '% loaded');
+            },
+
+            // onError callback
+            (error) => {
+                console.error('Error loading model:', error);
+                loadingDiv.textContent = 'Error loading model. Check console for details.';
+                loadingDiv.style.color = '#ff6666';
+            }
+        );
+
+        // Animation loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            if (controls.isLocked) {
+                // Calculate movement
+                velocity.x = 0;
+                velocity.z = 0;
+
+                direction.z = Number(moveState.forward) - Number(moveState.backward);
+                direction.x = Number(moveState.right) - Number(moveState.left);
+                direction.normalize(); // Ensures diagonal movement isn't faster
+
+                const currentSpeed = moveState.sprint ? moveSpeed * sprintMultiplier : moveSpeed;
+
+                if (moveState.forward || moveState.backward) {
+                    velocity.z = direction.z * currentSpeed * delta;
+                }
+                if (moveState.left || moveState.right) {
+                    velocity.x = direction.x * currentSpeed * delta;
+                }
+
+                // Apply movement
+                controls.moveRight(velocity.x);
+                controls.moveForward(velocity.z);
+
+                // Lock to ground level (no jumping/falling)
+                camera.position.y = EYE_HEIGHT;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
