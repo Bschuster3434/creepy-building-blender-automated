@@ -30,6 +30,8 @@ from phase_1b_helpers import (
     create_outer_trim,
     create_window_sill,
     create_door_threshold,
+    create_inner_window_frame,
+    create_horizontal_muntin,
     reposition_frame_pieces,
     reposition_glass_or_panel
 )
@@ -237,6 +239,29 @@ if detail_spec:
         reposition_frame_pieces(frame, -frame_recess)
         print(f"    ✓ Frame recessed: {frame_recess}m into wall")
 
+    # Inner frame (window stop) for layered look
+    if detail_spec.get('inner_frame', {}).get('enabled'):
+        inner_spec = detail_spec['inner_frame']
+        inner_thickness = inner_spec['thickness']
+        inner_depth = inner_spec['depth']
+        inner_setback = inner_spec['setback']
+
+        # Inner frame Y position: outer frame Y - additional setback
+        inner_y = cutout_spec['position']['y'] - frame_recess - inner_setback
+
+        inner_frame = create_inner_window_frame(
+            "Front_Left_Window",
+            outer_width=window_spec['frame']['width'],
+            outer_height=window_spec['frame']['height'],
+            outer_frame_thickness=window_spec['frame']['thickness'],
+            inner_frame_thickness=inner_thickness,
+            inner_frame_depth=inner_depth,
+            location=(cutout_spec['position']['x'], inner_y, cutout_spec['position']['z'] + window_spec['frame']['height']/2),
+            color=window_spec['frame']['color']
+        )
+        phase_1b_objects.extend(inner_frame)
+        print(f"    ✓ Inner frame: {inner_thickness}m thick, {inner_setback}m setback")
+
     # Window sill at bottom
     if detail_spec.get('window_sill', {}).get('enabled'):
         sill_spec = detail_spec['window_sill']
@@ -264,9 +289,10 @@ if detail_spec:
         phase_1b_objects.append(sill)
         print(f"    ✓ Window sill: {sill_width}m wide × {sill_height}m thick, projects {sill_projection}m")
 
-    # Reposition glass back by recess + setback
+    # Reposition glass back by recess + inner frame setback + glass setback
     glass_setback = detail_spec.get('glass_setback', 0)
-    total_glass_offset = -(frame_recess + glass_setback)
+    inner_frame_setback = detail_spec.get('inner_frame', {}).get('setback', 0) if detail_spec.get('inner_frame', {}).get('enabled') else 0
+    total_glass_offset = -(frame_recess + inner_frame_setback + glass_setback)
     if total_glass_offset != 0:
         reposition_glass_or_panel(glass, total_glass_offset)
         print(f"    ✓ Glass recessed: {-total_glass_offset}m from outer trim")
@@ -382,6 +408,29 @@ if detail_spec:
         reposition_frame_pieces(frame, -frame_recess)
         print(f"    ✓ Frame recessed: {frame_recess}m into wall")
 
+    # Inner frame (window stop) for layered look
+    if detail_spec.get('inner_frame', {}).get('enabled'):
+        inner_spec = detail_spec['inner_frame']
+        inner_thickness = inner_spec['thickness']
+        inner_depth = inner_spec['depth']
+        inner_setback = inner_spec['setback']
+
+        # Inner frame Y position: outer frame Y - additional setback
+        inner_y = cutout_spec['position']['y'] - frame_recess - inner_setback
+
+        inner_frame = create_inner_window_frame(
+            "Front_Right_Window",
+            outer_width=window_spec['frame']['width'],
+            outer_height=window_spec['frame']['height'],
+            outer_frame_thickness=window_spec['frame']['thickness'],
+            inner_frame_thickness=inner_thickness,
+            inner_frame_depth=inner_depth,
+            location=(cutout_spec['position']['x'], inner_y, cutout_spec['position']['z'] + window_spec['frame']['height']/2),
+            color=window_spec['frame']['color']
+        )
+        phase_1b_objects.extend(inner_frame)
+        print(f"    ✓ Inner frame: {inner_thickness}m thick, {inner_setback}m setback")
+
     # Window sill at bottom (if enabled)
     if detail_spec.get('window_sill', {}).get('enabled'):
         sill_spec = detail_spec['window_sill']
@@ -404,9 +453,10 @@ if detail_spec:
         phase_1b_objects.append(sill)
         print(f"    ✓ Window sill: {sill_width}m wide × {sill_height}m thick, projects {sill_projection}m")
 
-    # Reposition glass back by recess + setback
+    # Reposition glass back by recess + inner frame setback + glass setback
     glass_setback = detail_spec.get('glass_setback', 0)
-    total_glass_offset = -(frame_recess + glass_setback)
+    inner_frame_setback = detail_spec.get('inner_frame', {}).get('setback', 0) if detail_spec.get('inner_frame', {}).get('enabled') else 0
+    total_glass_offset = -(frame_recess + inner_frame_setback + glass_setback)
     if total_glass_offset != 0:
         reposition_glass_or_panel(glass, total_glass_offset)
         print(f"    ✓ Glass recessed: {-total_glass_offset}m from outer trim")
@@ -451,18 +501,80 @@ frame = create_window_frame(
 )
 phase_1b_objects.extend(frame)
 
-glass = create_window_glass(
-    "Alcove_Left_Window_Glass",
-    width=window_spec['glass']['width'],
-    height=window_spec['glass']['height'],
-    thickness=window_spec['glass']['thickness'],
-    location=(window_x, window_y, cutout_spec['position']['z'] + window_spec['frame']['height']/2),
-    rotation_z=alcove_left_angle,
-    color=window_spec['glass']['color']
-)
-phase_1b_objects.append(glass)
-print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m (rotated {math.degrees(alcove_left_angle):.1f}°, y={window_y:.3f})")
-print(f"  ✓ Glass: {window_spec['glass']['width']}m × {window_spec['glass']['height']}m")
+# Check if divided light is enabled
+divided_light = window_spec.get('divided_light', {})
+if divided_light.get('enabled'):
+    # Create divided glass panes with muntin
+    glass_width = window_spec['glass']['width']
+    glass_total_height = window_spec['glass']['height']
+    muntin_thickness = divided_light['muntin_thickness']
+    muntin_depth = divided_light['muntin_depth']
+    division_ratio = divided_light['division_ratio']
+
+    # Calculate pane heights
+    usable_height = glass_total_height - muntin_thickness
+    upper_height = usable_height * division_ratio
+    lower_height = usable_height * (1 - division_ratio)
+
+    # Window center Z
+    window_center_z = cutout_spec['position']['z'] + window_spec['frame']['height']/2
+    frame_inner_bottom_z = window_center_z - glass_total_height/2
+
+    # Upper pane position (top of frame)
+    upper_pane_z = frame_inner_bottom_z + lower_height + muntin_thickness + upper_height/2
+    upper_glass = create_window_glass(
+        "Alcove_Left_Window_Glass_Upper",
+        width=glass_width,
+        height=upper_height,
+        thickness=window_spec['glass']['thickness'],
+        location=(window_x, window_y, upper_pane_z),
+        rotation_z=alcove_left_angle,
+        color=window_spec['glass']['color']
+    )
+    phase_1b_objects.append(upper_glass)
+
+    # Lower pane position (bottom of frame)
+    lower_pane_z = frame_inner_bottom_z + lower_height/2
+    lower_glass = create_window_glass(
+        "Alcove_Left_Window_Glass_Lower",
+        width=glass_width,
+        height=lower_height,
+        thickness=window_spec['glass']['thickness'],
+        location=(window_x, window_y, lower_pane_z),
+        rotation_z=alcove_left_angle,
+        color=window_spec['glass']['color']
+    )
+    phase_1b_objects.append(lower_glass)
+
+    # Muntin bar position (between panes)
+    muntin_z = frame_inner_bottom_z + lower_height + muntin_thickness/2
+    muntin = create_horizontal_muntin(
+        "Alcove_Left_Window_Muntin",
+        width=glass_width,
+        thickness=muntin_thickness,
+        depth=muntin_depth,
+        location=(window_x, window_y, muntin_z),
+        rotation_z=alcove_left_angle,
+        color=window_spec['frame']['color']
+    )
+    phase_1b_objects.append(muntin)
+
+    print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m (rotated {math.degrees(alcove_left_angle):.1f}°)")
+    print(f"  ✓ Divided light: upper {upper_height:.2f}m + muntin {muntin_thickness}m + lower {lower_height:.2f}m")
+else:
+    # Single glass pane (original behavior)
+    glass = create_window_glass(
+        "Alcove_Left_Window_Glass",
+        width=window_spec['glass']['width'],
+        height=window_spec['glass']['height'],
+        thickness=window_spec['glass']['thickness'],
+        location=(window_x, window_y, cutout_spec['position']['z'] + window_spec['frame']['height']/2),
+        rotation_z=alcove_left_angle,
+        color=window_spec['glass']['color']
+    )
+    phase_1b_objects.append(glass)
+    print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m (rotated {math.degrees(alcove_left_angle):.1f}°, y={window_y:.3f})")
+    print(f"  ✓ Glass: {window_spec['glass']['width']}m × {window_spec['glass']['height']}m")
 
 # Alcove right window (angled wall)
 print("\n[2.4] Alcove Right Window (angled)...")
@@ -499,18 +611,80 @@ frame = create_window_frame(
 )
 phase_1b_objects.extend(frame)
 
-glass = create_window_glass(
-    "Alcove_Right_Window_Glass",
-    width=window_spec['glass']['width'],
-    height=window_spec['glass']['height'],
-    thickness=window_spec['glass']['thickness'],
-    location=(window_x, window_y, cutout_spec['position']['z'] + window_spec['frame']['height']/2),
-    rotation_z=alcove_right_angle,
-    color=window_spec['glass']['color']
-)
-phase_1b_objects.append(glass)
-print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m (rotated {math.degrees(alcove_right_angle):.1f}°, y={window_y:.3f})")
-print(f"  ✓ Glass: {window_spec['glass']['width']}m × {window_spec['glass']['height']}m")
+# Check if divided light is enabled
+divided_light = window_spec.get('divided_light', {})
+if divided_light.get('enabled'):
+    # Create divided glass panes with muntin
+    glass_width = window_spec['glass']['width']
+    glass_total_height = window_spec['glass']['height']
+    muntin_thickness = divided_light['muntin_thickness']
+    muntin_depth = divided_light['muntin_depth']
+    division_ratio = divided_light['division_ratio']
+
+    # Calculate pane heights
+    usable_height = glass_total_height - muntin_thickness
+    upper_height = usable_height * division_ratio
+    lower_height = usable_height * (1 - division_ratio)
+
+    # Window center Z
+    window_center_z = cutout_spec['position']['z'] + window_spec['frame']['height']/2
+    frame_inner_bottom_z = window_center_z - glass_total_height/2
+
+    # Upper pane position (top of frame)
+    upper_pane_z = frame_inner_bottom_z + lower_height + muntin_thickness + upper_height/2
+    upper_glass = create_window_glass(
+        "Alcove_Right_Window_Glass_Upper",
+        width=glass_width,
+        height=upper_height,
+        thickness=window_spec['glass']['thickness'],
+        location=(window_x, window_y, upper_pane_z),
+        rotation_z=alcove_right_angle,
+        color=window_spec['glass']['color']
+    )
+    phase_1b_objects.append(upper_glass)
+
+    # Lower pane position (bottom of frame)
+    lower_pane_z = frame_inner_bottom_z + lower_height/2
+    lower_glass = create_window_glass(
+        "Alcove_Right_Window_Glass_Lower",
+        width=glass_width,
+        height=lower_height,
+        thickness=window_spec['glass']['thickness'],
+        location=(window_x, window_y, lower_pane_z),
+        rotation_z=alcove_right_angle,
+        color=window_spec['glass']['color']
+    )
+    phase_1b_objects.append(lower_glass)
+
+    # Muntin bar position (between panes)
+    muntin_z = frame_inner_bottom_z + lower_height + muntin_thickness/2
+    muntin = create_horizontal_muntin(
+        "Alcove_Right_Window_Muntin",
+        width=glass_width,
+        thickness=muntin_thickness,
+        depth=muntin_depth,
+        location=(window_x, window_y, muntin_z),
+        rotation_z=alcove_right_angle,
+        color=window_spec['frame']['color']
+    )
+    phase_1b_objects.append(muntin)
+
+    print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m (rotated {math.degrees(alcove_right_angle):.1f}°)")
+    print(f"  ✓ Divided light: upper {upper_height:.2f}m + muntin {muntin_thickness}m + lower {lower_height:.2f}m")
+else:
+    # Single glass pane (original behavior)
+    glass = create_window_glass(
+        "Alcove_Right_Window_Glass",
+        width=window_spec['glass']['width'],
+        height=window_spec['glass']['height'],
+        thickness=window_spec['glass']['thickness'],
+        location=(window_x, window_y, cutout_spec['position']['z'] + window_spec['frame']['height']/2),
+        rotation_z=alcove_right_angle,
+        color=window_spec['glass']['color']
+    )
+    phase_1b_objects.append(glass)
+    print(f"  ✓ Frame: {window_spec['frame']['width']}m × {window_spec['frame']['height']}m (rotated {math.degrees(alcove_right_angle):.1f}°, y={window_y:.3f})")
+    print(f"  ✓ Glass: {window_spec['glass']['width']}m × {window_spec['glass']['height']}m")
 
 # ============================================================================
 # SECTION 3: ADD DOOR FRAMES AND PANELS
@@ -538,33 +712,95 @@ phase_1b_objects.extend(frame)
 # Two door panels (double door)
 panel_width = door_spec['door_panels']['panel_width']
 panel_height = door_spec['door_panels']['panel_height']
-panel_thickness = door_spec['door_panels']['panel_thickness']
-gap = door_spec['door_panels']['center_gap']
+panel_depth = door_spec['door_panels'].get('panel_depth', 0.04)
+panel_style = door_spec['door_panels'].get('style', 'solid')
 
-# Left panel
-left_panel = create_door_panel(
-    "Front_Entry_Door_Left_Panel",
-    width=panel_width,
-    height=panel_height,
-    thickness=panel_thickness,
-    location=(cutout_spec['position']['x'] - panel_width/2 - gap/2, cutout_spec['position']['y'], cutout_spec['position']['z'] + panel_height/2),
-    color=door_spec['door_panels']['color']
-)
-phase_1b_objects.append(left_panel)
+if panel_style == '10-lite':
+    # Import the French door helper
+    from phase_1b_helpers import create_french_door_panel
 
-# Right panel
-right_panel = create_door_panel(
-    "Front_Entry_Door_Right_Panel",
-    width=panel_width,
-    height=panel_height,
-    thickness=panel_thickness,
-    location=(cutout_spec['position']['x'] + panel_width/2 + gap/2, cutout_spec['position']['y'], cutout_spec['position']['z'] + panel_height/2),
-    color=door_spec['door_panels']['color']
-)
-phase_1b_objects.append(right_panel)
+    # Get grid configuration
+    grid = door_spec['door_panels']['grid']
+    rows = grid['rows']
+    cols = grid['cols']
+    stile_width = door_spec['door_panels']['stile_width']
+    rail_width = door_spec['door_panels']['rail_width']
+    muntin_width = door_spec['door_panels']['muntin_width']
+    glass_thickness = door_spec['door_panels']['glass_thickness']
+    frame_color = door_spec['door_panels']['frame_color']
+    glass_color = door_spec['door_panels']['glass_color']
 
-print(f"  ✓ Frame: {door_spec['frame']['width']}m × {door_spec['frame']['height']}m")
-print(f"  ✓ Panels: 2× {panel_width}m × {panel_height}m (double door)")
+    # Left French door panel
+    left_panel_result = create_french_door_panel(
+        "Front_Entry_Door_Left",
+        width=panel_width,
+        height=panel_height,
+        location=(cutout_spec['position']['x'] - panel_width/2, cutout_spec['position']['y'], cutout_spec['position']['z'] + panel_height/2),
+        stile_width=stile_width,
+        rail_width=rail_width,
+        muntin_width=muntin_width,
+        glass_thickness=glass_thickness,
+        panel_depth=panel_depth,
+        rows=rows,
+        cols=cols,
+        frame_color=frame_color,
+        glass_color=glass_color
+    )
+    phase_1b_objects.extend(left_panel_result['frame'])
+    phase_1b_objects.extend(left_panel_result['muntins'])
+    phase_1b_objects.extend(left_panel_result['glass'])
+
+    # Right French door panel
+    right_panel_result = create_french_door_panel(
+        "Front_Entry_Door_Right",
+        width=panel_width,
+        height=panel_height,
+        location=(cutout_spec['position']['x'] + panel_width/2, cutout_spec['position']['y'], cutout_spec['position']['z'] + panel_height/2),
+        stile_width=stile_width,
+        rail_width=rail_width,
+        muntin_width=muntin_width,
+        glass_thickness=glass_thickness,
+        panel_depth=panel_depth,
+        rows=rows,
+        cols=cols,
+        frame_color=frame_color,
+        glass_color=glass_color
+    )
+    phase_1b_objects.extend(right_panel_result['frame'])
+    phase_1b_objects.extend(right_panel_result['muntins'])
+    phase_1b_objects.extend(right_panel_result['glass'])
+
+    print(f"  ✓ Frame: {door_spec['frame']['width']}m × {door_spec['frame']['height']}m")
+    print(f"  ✓ 10-lite panels: 2× {panel_width}m × {panel_height}m ({rows}×{cols} grid)")
+else:
+    # Original solid panel code (fallback)
+    panel_thickness = door_spec['door_panels'].get('panel_thickness', panel_depth)
+    gap = door_spec['door_panels'].get('center_gap', 0)
+
+    # Left panel
+    left_panel = create_door_panel(
+        "Front_Entry_Door_Left_Panel",
+        width=panel_width,
+        height=panel_height,
+        thickness=panel_thickness,
+        location=(cutout_spec['position']['x'] - panel_width/2 - gap/2, cutout_spec['position']['y'], cutout_spec['position']['z'] + panel_height/2),
+        color=door_spec['door_panels'].get('color', '#1A1A1A')
+    )
+    phase_1b_objects.append(left_panel)
+
+    # Right panel
+    right_panel = create_door_panel(
+        "Front_Entry_Door_Right_Panel",
+        width=panel_width,
+        height=panel_height,
+        thickness=panel_thickness,
+        location=(cutout_spec['position']['x'] + panel_width/2 + gap/2, cutout_spec['position']['y'], cutout_spec['position']['z'] + panel_height/2),
+        color=door_spec['door_panels'].get('color', '#1A1A1A')
+    )
+    phase_1b_objects.append(right_panel)
+
+    print(f"  ✓ Frame: {door_spec['frame']['width']}m × {door_spec['frame']['height']}m")
+    print(f"  ✓ Panels: 2× {panel_width}m × {panel_height}m (double door)")
 
 # Rear service door
 print("\n[3.2] Rear Service Door...")
@@ -582,18 +818,72 @@ frame = create_door_frame(
 )
 phase_1b_objects.extend(frame)
 
-panel = create_door_panel(
-    "Rear_Service_Door_Panel",
-    width=door_spec['door_panel']['width'],
-    height=door_spec['door_panel']['height'],
-    thickness=door_spec['door_panel']['thickness'],
-    location=(cutout_spec['position']['x'], cutout_spec['position']['y'], cutout_spec['position']['z'] + door_spec['door_panel']['height']/2),
-    color=door_spec['door_panel']['color']
-)
-phase_1b_objects.append(panel)
+# Check panel style
+panel_style = door_spec['door_panel'].get('style', 'solid')
 
-print(f"  ✓ Frame: {door_spec['frame']['width']}m × {door_spec['frame']['height']}m")
-print(f"  ✓ Panel: {door_spec['door_panel']['width']}m × {door_spec['door_panel']['height']}m")
+if panel_style == 'half-lite':
+    # Import the half-lite door helper
+    from phase_1b_helpers import create_half_lite_door_panel
+
+    # Get configuration
+    panel_width = door_spec['door_panel']['width']
+    panel_height = door_spec['door_panel']['height']
+    panel_depth = door_spec['door_panel']['panel_depth']
+    glass_ratio = door_spec['door_panel']['glass_ratio']
+    grid = door_spec['door_panel']['grid']
+    rows = grid['rows']
+    cols = grid['cols']
+    stile_width = door_spec['door_panel']['stile_width']
+    rail_width = door_spec['door_panel']['rail_width']
+    mid_rail_width = door_spec['door_panel']['mid_rail_width']
+    muntin_width = door_spec['door_panel']['muntin_width']
+    glass_thickness = door_spec['door_panel']['glass_thickness']
+    panel_inset = door_spec['door_panel']['panel_inset']
+    frame_color = door_spec['door_panel']['frame_color']
+    glass_color = door_spec['door_panel']['glass_color']
+    panel_color = door_spec['door_panel']['panel_color']
+
+    # Create half-lite door panel
+    panel_result = create_half_lite_door_panel(
+        "Rear_Service_Door",
+        width=panel_width,
+        height=panel_height,
+        location=(cutout_spec['position']['x'], cutout_spec['position']['y'], cutout_spec['position']['z'] + panel_height/2),
+        glass_ratio=glass_ratio,
+        stile_width=stile_width,
+        rail_width=rail_width,
+        mid_rail_width=mid_rail_width,
+        muntin_width=muntin_width,
+        glass_thickness=glass_thickness,
+        panel_depth=panel_depth,
+        rows=rows,
+        cols=cols,
+        panel_inset=panel_inset,
+        frame_color=frame_color,
+        glass_color=glass_color,
+        panel_color=panel_color
+    )
+    phase_1b_objects.extend(panel_result['frame'])
+    phase_1b_objects.extend(panel_result['muntins'])
+    phase_1b_objects.extend(panel_result['glass'])
+    phase_1b_objects.extend(panel_result['panels'])
+
+    print(f"  ✓ Frame: {door_spec['frame']['width']}m × {door_spec['frame']['height']}m")
+    print(f"  ✓ Half-lite panel: {panel_width}m × {panel_height}m ({rows}×{cols} glass grid + 2 panels)")
+else:
+    # Original solid panel code (fallback)
+    panel = create_door_panel(
+        "Rear_Service_Door_Panel",
+        width=door_spec['door_panel']['width'],
+        height=door_spec['door_panel']['height'],
+        thickness=door_spec['door_panel'].get('thickness', 0.04),
+        location=(cutout_spec['position']['x'], cutout_spec['position']['y'], cutout_spec['position']['z'] + door_spec['door_panel']['height']/2),
+        color=door_spec['door_panel'].get('color', '#1A1A1A')
+    )
+    phase_1b_objects.append(panel)
+
+    print(f"  ✓ Frame: {door_spec['frame']['width']}m × {door_spec['frame']['height']}m")
+    print(f"  ✓ Panel: {door_spec['door_panel']['width']}m × {door_spec['door_panel']['height']}m")
 
 print(f"\n✓ Phase 1B geometry complete: {len(phase_1b_objects)} new objects added")
 

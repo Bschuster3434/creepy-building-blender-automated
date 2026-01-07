@@ -47,7 +47,10 @@ detail_standards:
     outer_trim_depth: 0.02           # 2cm projection from brick
     frame_recess: 0.08               # 8cm frame setback from outer trim
     frame_profile_width: 0.06        # 6cm frame face width
-    glass_setback: 0.02              # 2cm glass setback from frame face
+    inner_frame_thickness: 0.03      # 3cm inner frame/stop thickness
+    inner_frame_depth: 0.05          # 5cm inner frame depth
+    inner_frame_setback: 0.03        # 3cm inner frame setback from outer frame
+    glass_setback: 0.02              # 2cm glass setback from inner frame face
     sill_overhang: 0.08              # 8cm sill overhang on sides (2× original)
     sill_projection: 0.12            # 12cm sill forward projection (3× original)
     sill_height: 0.08                # 8cm sill thickness (much thicker)
@@ -89,12 +92,17 @@ front_left_display_window:
       bottom_width: 0.12         # 12cm bottom trim (not used)
       depth: 0.02                # 2cm trim projection from brick
     frame_recess: 0.08           # 8cm frame setback from outer trim
+    inner_frame:
+      enabled: true              # Inner frame/window stop for layered look
+      thickness: 0.03            # 3cm inner frame thickness
+      depth: 0.05                # 5cm inner frame depth
+      setback: 0.03              # 3cm setback from outer frame
     window_sill:
       enabled: false             # Window sill disabled (user removed)
       overhang: 0.08             # 8cm overhang beyond frame on each side
       projection: 0.12           # 12cm sill forward projection (much larger)
       height: 0.08               # 8cm sill thickness (much thicker)
-    glass_setback: 0.02          # 2cm glass setback from frame face
+    glass_setback: 0.02          # 2cm glass setback from inner frame face
 
 front_right_display_window:
   cutout_ref: front_right_display_window
@@ -123,12 +131,17 @@ front_right_display_window:
       bottom_width: 0.12         # 12cm bottom trim (not used)
       depth: 0.02                # 2cm trim projection from brick
     frame_recess: 0.08           # 8cm frame setback from outer trim
+    inner_frame:
+      enabled: true              # Inner frame/window stop for layered look
+      thickness: 0.03            # 3cm inner frame thickness
+      depth: 0.05                # 5cm inner frame depth
+      setback: 0.03              # 3cm setback from outer frame
     window_sill:
       enabled: false             # Window sill disabled (user removed)
       overhang: 0.08             # 8cm overhang beyond frame on each side
       projection: 0.12           # 12cm sill forward projection (much larger)
       height: 0.08               # 8cm sill thickness (much thicker)
-    glass_setback: 0.02          # 2cm glass setback from frame face
+    glass_setback: 0.02          # 2cm glass setback from inner frame face
 
 # Alcove side windows (Phase 1A cutouts: 0.75m × 2.22m on angled walls)
 door_alcove_left_window:
@@ -149,8 +162,14 @@ door_alcove_left_window:
     # Glass fills frame inner opening exactly (NO gap)
     # Frame inner: (0.75 - 2×0.05) × (2.22 - 2×0.05) = 0.65 × 2.12
     width: 0.65                  # Frame inner width
-    height: 2.12                 # Frame inner height
+    height: 2.12                 # Frame inner height (total, before division)
     thickness: 0.01
+  divided_light:
+    enabled: true                # Split into multiple panes
+    horizontal_divisions: 1      # 1 division = 2 panes
+    muntin_thickness: 0.04       # 4cm muntin bar height
+    muntin_depth: 0.03           # 3cm muntin depth
+    division_ratio: 0.25         # Upper pane is 25% of total height
   position_ref: phase_1a_cutout
 
 door_alcove_right_window:
@@ -170,24 +189,30 @@ door_alcove_right_window:
     color: "#000000"
     # Glass fills frame inner opening exactly (NO gap)
     width: 0.65                  # Frame inner width
-    height: 2.12                 # Frame inner height
+    height: 2.12                 # Frame inner height (total, before division)
     thickness: 0.01
+  divided_light:
+    enabled: true                # Split into multiple panes
+    horizontal_divisions: 1      # 1 division = 2 panes
+    muntin_thickness: 0.04       # 4cm muntin bar height
+    muntin_depth: 0.03           # 3cm muntin depth
+    division_ratio: 0.25         # Upper pane is 25% of total height
   position_ref: phase_1a_cutout
 
 # Front entry door (Phase 1A cutout: 1.4m × 2.67m, alcove back wall)
 front_entry_door:
   cutout_ref: front_entry_door
-  type: double_french_door       # Double door with panels
+  type: double_french_door       # Double door with 10-lite glass panels
   frame:
     enabled: true
-    color: "#8B4513"             # Brown
+    color: "#FFFFFF"             # White (matching reference)
     width: 1.4                   # EXACT cutout width
     height: 2.67                 # EXACT cutout height
     thickness: 0.08
     depth: 0.15
   door_panels:
     enabled: true
-    color: "#1A1A1A"             # Very dark gray
+    style: "10-lite"             # 10-lite French door style
     count: 2                     # Two panels (double door)
     # Door frame is 3-SIDED (left, right, top - NO bottom piece)
     # Frame inner width: (1.4 - 2×0.08) = 1.24
@@ -195,8 +220,17 @@ front_entry_door:
     # Split width for two panels: 1.24 / 2 = 0.62 per panel
     panel_width: 0.62            # Half of frame inner width
     panel_height: 2.59           # Frame inner height (ground to top frame inner)
-    panel_thickness: 0.04
-    center_gap: 0                # NO gap between panels
+    panel_depth: 0.04            # Panel frame/muntin depth
+    # 10-lite configuration: 2 columns × 5 rows = 10 panes per door
+    grid:
+      rows: 5                    # 5 horizontal glass rows
+      cols: 2                    # 2 vertical glass columns
+    stile_width: 0.05            # Vertical edge members
+    rail_width: 0.08             # Top/bottom horizontal members
+    muntin_width: 0.03           # Grid divider bars
+    glass_thickness: 0.01        # Glass pane thickness
+    frame_color: "#FFFFFF"       # White frame/muntins
+    glass_color: "#000000"       # Black placeholder glass
   position_ref: phase_1a_cutout
 
 # Rear service door (Phase 1A cutout: 1.0m × 2.1m, rear wall)
@@ -205,20 +239,34 @@ rear_service_door:
   type: single_door
   frame:
     enabled: true
-    color: "#8B4513"
+    color: "#FFFFFF"             # White (matching reference)
     width: 1.0                   # EXACT cutout width
     height: 2.1                  # EXACT cutout height
     thickness: 0.08
     depth: 0.15
   door_panel:
     enabled: true
-    color: "#1A1A1A"
+    style: "half-lite"           # Half-lite style with upper glass, lower panels
     # Door frame is 3-SIDED (left, right, top - NO bottom piece)
     # Frame inner width: (1.0 - 2×0.08) = 0.84
     # Frame inner height: (2.1 - 0.08) = 2.02 (only subtract top, no bottom)
     width: 0.84                  # Frame inner width
     height: 2.02                 # Frame inner height (ground to top frame inner)
-    thickness: 0.04
+    panel_depth: 0.04            # Panel frame/muntin depth
+    # Half-lite configuration: 9-lite glass (3×3) in upper half, 2 panels in lower half
+    glass_ratio: 0.55            # 55% glass, 45% panels
+    grid:
+      rows: 3                    # 3 horizontal glass rows
+      cols: 3                    # 3 vertical glass columns
+    stile_width: 0.05            # Vertical edge members
+    rail_width: 0.06             # Top/bottom horizontal members
+    mid_rail_width: 0.08         # Rail between glass and panels
+    muntin_width: 0.025          # Grid divider bars
+    glass_thickness: 0.01        # Glass pane thickness
+    panel_inset: 0.015           # Raised panel inset
+    frame_color: "#FFFFFF"       # White frame/muntins
+    glass_color: "#000000"       # Black placeholder glass
+    panel_color: "#FFFFFF"       # White raised panels
   position_ref: phase_1a_cutout
 
 # Validation requirements
