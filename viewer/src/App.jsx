@@ -189,7 +189,7 @@ function Model({ url, onLoad, onDoorsFound }) {
             // Open direction: positive = outward swing
             openAngle: name.includes('Front_Entry_Door_Left') ? Math.PI / 2 :
                        name.includes('Front_Entry_Door_Right') ? -Math.PI / 2 :
-                       name.includes('Rear_Service') ? -Math.PI / 2 : Math.PI / 2,
+                       name.includes('Rear_Service') ? Math.PI / 2 : Math.PI / 2,
           })
         }
 
