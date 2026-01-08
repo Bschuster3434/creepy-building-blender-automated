@@ -265,6 +265,21 @@ function Tree({ position, scale = 1, trunkHeight = 2, foliageRadius = 1.5, onTru
   )
 }
 
+// Tone mapping and renderer configuration for realistic lighting
+function ToneMapping() {
+  const { gl } = useThree()
+
+  useEffect(() => {
+    // ACESFilmic tone mapping for cinematic, realistic lighting
+    gl.toneMapping = THREE.ACESFilmicToneMapping
+    gl.toneMappingExposure = 1.0
+    // Ensure proper color space for realistic colors
+    gl.outputColorSpace = THREE.SRGBColorSpace
+  }, [gl])
+
+  return null
+}
+
 // Tree positions based on reference photos - trees behind and around the building
 const TREE_POSITIONS = [
   // Large tree to the left (prominent in reference)
@@ -538,24 +553,49 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
 
   return (
     <>
+      {/* Configure renderer for realistic tone mapping */}
+      <ToneMapping />
+
       {/* Natural daylight lighting */}
-      <ambientLight intensity={0.4} color="#87CEEB" />
+      <ambientLight intensity={0.3} color="#87CEEB" />
+
+      {/* Main sun light with improved shadow settings for interiors */}
       <directionalLight
         position={sunPosition}
-        intensity={1.5}
+        intensity={1.8}
         castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-far={100}
-        shadow-camera-left={-30}
-        shadow-camera-right={30}
-        shadow-camera-top={30}
-        shadow-camera-bottom={-30}
-        color="#FFF5E1"
+        shadow-mapSize={[4096, 4096]}
+        shadow-camera-far={80}
+        shadow-camera-near={0.1}
+        shadow-camera-left={-25}
+        shadow-camera-right={25}
+        shadow-camera-top={25}
+        shadow-camera-bottom={-25}
+        shadow-bias={-0.0001}
+        shadow-normalBias={0.02}
+        color="#FFF8E7"
       />
+
+      {/* Secondary fill light - simulates sky bounce from opposite side */}
+      <directionalLight
+        position={[-40, 20, -30]}
+        intensity={0.4}
+        color="#B4D4E7"
+      />
+
+      {/* Soft interior fill light - helps illuminate indoor spaces */}
+      <pointLight
+        position={[0, 8, 0]}
+        intensity={0.3}
+        color="#FFF5E8"
+        distance={30}
+        decay={2}
+      />
+
       <hemisphereLight
         skyColor="#87CEEB"
-        groundColor="#3d5c3d"
-        intensity={0.5}
+        groundColor="#5a7a5a"
+        intensity={0.6}
       />
 
       {/* Atmospheric fog for depth and realism */}
@@ -1527,7 +1567,11 @@ export default function App() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
-        shadows
+        shadows="soft"
+        gl={{
+          antialias: true,
+          shadowMap: { type: THREE.PCFSoftShadowMap }
+        }}
         camera={{ position: [20, 15, 20], fov: 50 }}
         style={{ background: 'linear-gradient(to bottom, #87CEEB, #E0F6FF)' }}
       >
