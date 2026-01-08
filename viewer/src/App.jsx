@@ -1,6 +1,6 @@
 import React, { Suspense, useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, useGLTF, Sky, PointerLockControls } from '@react-three/drei'
+import { OrbitControls, useGLTF, Sky, PointerLockControls, useProgress } from '@react-three/drei'
 import * as THREE from 'three'
 
 const MODELS = {
@@ -1137,6 +1137,116 @@ function ReferenceGallery({ onClose, onSelectImage }) {
   )
 }
 
+// Loading screen component
+function Loader() {
+  const { progress, active } = useProgress()
+  const [show, setShow] = useState(true)
+  const [fadeOut, setFadeOut] = useState(false)
+
+  useEffect(() => {
+    // When loading starts, show the loader
+    if (active) {
+      setShow(true)
+      setFadeOut(false)
+    }
+    // When loading completes, start fade out animation
+    else if (progress === 100) {
+      setFadeOut(true)
+      // Hide completely after fade animation
+      const timer = setTimeout(() => setShow(false), 500)
+      return () => clearTimeout(timer)
+    }
+  }, [active, progress])
+
+  if (!show) return null
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+        opacity: fadeOut ? 0 : 1,
+        transition: 'opacity 0.5s ease-out',
+        pointerEvents: fadeOut ? 'none' : 'auto',
+      }}
+    >
+      {/* Title */}
+      <h1 style={{
+        color: 'white',
+        fontSize: 32,
+        fontWeight: 300,
+        margin: '0 0 10px 0',
+        letterSpacing: 2,
+      }}>
+        Building Viewer
+      </h1>
+
+      <p style={{
+        color: 'rgba(255, 255, 255, 0.6)',
+        fontSize: 14,
+        margin: '0 0 40px 0',
+      }}>
+        Loading 3D Model...
+      </p>
+
+      {/* Progress container */}
+      <div style={{
+        width: 300,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
+        {/* Progress bar background */}
+        <div style={{
+          width: '100%',
+          height: 4,
+          background: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}>
+          {/* Progress bar fill */}
+          <div style={{
+            width: `${progress}%`,
+            height: '100%',
+            background: 'linear-gradient(90deg, #4a6fa5, #6b8fc7)',
+            borderRadius: 2,
+            transition: 'width 0.3s ease-out',
+          }} />
+        </div>
+
+        {/* Progress percentage */}
+        <p style={{
+          color: 'rgba(255, 255, 255, 0.8)',
+          fontSize: 13,
+          marginTop: 15,
+          fontFamily: 'monospace',
+        }}>
+          {Math.round(progress)}%
+        </p>
+      </div>
+
+      {/* Hint text */}
+      <p style={{
+        position: 'absolute',
+        bottom: 40,
+        color: 'rgba(255, 255, 255, 0.4)',
+        fontSize: 12,
+      }}>
+        Use orbit controls to explore the building
+      </p>
+    </div>
+  )
+}
+
 export default function App() {
   const [selectedModel, setSelectedModel] = useState(0)
   const [isFirstPerson, setIsFirstPerson] = useState(false)
@@ -1360,6 +1470,9 @@ export default function App() {
           onNavigate={setLightboxImage}
         />
       )}
+
+      {/* Loading screen overlay */}
+      <Loader />
     </div>
   )
 }
