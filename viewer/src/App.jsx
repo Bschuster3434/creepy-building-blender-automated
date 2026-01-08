@@ -1,6 +1,8 @@
 import React, { Suspense, useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, useGLTF, Sky, PointerLockControls, useProgress } from '@react-three/drei'
+import { OrbitControls, useGLTF, Sky, PointerLockControls, useProgress, Environment } from '@react-three/drei'
+import { EffectComposer, SSAO, Vignette } from '@react-three/postprocessing'
+import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 
 const MODELS = {
@@ -208,9 +210,15 @@ function Model({ url, onLoad, onDoorsFound }) {
           // Exclude door objects from collision (so player can walk through)
           else if (nameLower.includes('door')) {
             // Door is visible but not collidable - don't add to collision meshes
+            // But doors should still cast and receive shadows
+            child.castShadow = true
+            child.receiveShadow = true
           }
           else {
             collisionMeshes.push(child)
+            // Enable shadow casting and receiving for realistic lighting
+            child.castShadow = true
+            child.receiveShadow = true
           }
         }
       })
@@ -261,6 +269,21 @@ function Tree({ position, scale = 1, trunkHeight = 2, foliageRadius = 1.5, onTru
       </mesh>
     </group>
   )
+}
+
+// Tone mapping and renderer configuration for realistic lighting
+function ToneMapping() {
+  const { gl } = useThree()
+
+  useEffect(() => {
+    // ACESFilmic tone mapping for cinematic, realistic lighting
+    gl.toneMapping = THREE.ACESFilmicToneMapping
+    gl.toneMappingExposure = 1.0
+    // Ensure proper color space for realistic colors
+    gl.outputColorSpace = THREE.SRGBColorSpace
+  }, [gl])
+
+  return null
 }
 
 // Tree positions based on reference photos - trees behind and around the building
@@ -536,25 +559,54 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
 
   return (
     <>
-      {/* Natural daylight lighting */}
-      <ambientLight intensity={0.4} color="#87CEEB" />
+      {/* Configure renderer for realistic tone mapping */}
+      <ToneMapping />
+
+      {/*
+        Minimal ambient light - kept very low so interiors stay dark.
+        This represents only indirect sky light that bounces everywhere.
+      */}
+      <ambientLight intensity={0.08} color="#87CEEB" />
+
+      {/* Main sun light - the primary light source that casts shadows */}
       <directionalLight
         position={sunPosition}
-        intensity={1.5}
+        intensity={2.2}
         castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-far={100}
-        shadow-camera-left={-30}
-        shadow-camera-right={30}
-        shadow-camera-top={30}
-        shadow-camera-bottom={-30}
-        color="#FFF5E1"
+        shadow-mapSize={[4096, 4096]}
+        shadow-camera-far={80}
+        shadow-camera-near={0.1}
+        shadow-camera-left={-25}
+        shadow-camera-right={25}
+        shadow-camera-top={25}
+        shadow-camera-bottom={-25}
+        shadow-bias={-0.0001}
+        shadow-normalBias={0.02}
+        color="#FFF8E7"
       />
+
+      {/* Secondary fill light - very subtle sky bounce */}
+      <directionalLight
+        position={[-40, 20, -30]}
+        intensity={0.15}
+        color="#B4D4E7"
+      />
+
+      {/*
+        Hemisphere light kept minimal - this doesn't respect geometry
+        so we keep it low to avoid unrealistic interior lighting.
+      */}
       <hemisphereLight
         skyColor="#87CEEB"
-        groundColor="#3d5c3d"
-        intensity={0.5}
+        groundColor="#3a5a3a"
+        intensity={0.15}
       />
+
+      {/* Atmospheric fog for depth and realism */}
+      <fog attach="fog" args={['#c8d8e8', 60, 200]} />
+
+      {/* Environment map for realistic reflections on surfaces */}
+      <Environment preset="sunset" background={false} />
 
       <Suspense fallback={null}>
         <Model key={modelUrl} url={modelUrl} onLoad={handleModelLoad} onDoorsFound={handleDoorsFound} />
@@ -667,6 +719,25 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
           target={[0, 5, 0]}
         />
       )}
+
+      {/* Post-processing effects for enhanced realism */}
+      <EffectComposer>
+        {/* Screen-space ambient occlusion - darkens corners and crevices */}
+        <SSAO
+          blendFunction={BlendFunction.MULTIPLY}
+          samples={21}
+          radius={7}
+          intensity={40}
+          luminanceInfluence={0.6}
+          color="black"
+        />
+        {/* Subtle vignette for cinematic look */}
+        <Vignette
+          offset={0.3}
+          darkness={0.4}
+          blendFunction={BlendFunction.NORMAL}
+        />
+      </EffectComposer>
     </>
   )
 }
@@ -1500,7 +1571,11 @@ export default function App() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
-        shadows
+        shadows="soft"
+        gl={{
+          antialias: true,
+          shadowMap: { type: THREE.PCFSoftShadowMap }
+        }}
         camera={{ position: [20, 15, 20], fov: 50 }}
         style={{ background: 'linear-gradient(to bottom, #87CEEB, #E0F6FF)' }}
       >
