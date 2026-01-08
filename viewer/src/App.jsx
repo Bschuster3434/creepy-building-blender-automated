@@ -1137,7 +1137,7 @@ function ReferenceGallery({ onClose, onSelectImage }) {
   )
 }
 
-// Loading screen component
+// Loading screen component - styled to match the outdoor scene
 function Loader() {
   const { progress, active } = useProgress()
   const [show, setShow] = useState(true)
@@ -1160,6 +1160,62 @@ function Loader() {
 
   if (!show) return null
 
+  // Simple tree silhouette component
+  const TreeSilhouette = ({ left, height, scale = 1 }) => (
+    <div style={{
+      position: 'absolute',
+      bottom: 80,
+      left: `${left}%`,
+      transform: 'translateX(-50%)',
+    }}>
+      {/* Trunk */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 8 * scale,
+        height: height * 0.3 * scale,
+        background: '#4a5d3a',
+        borderRadius: 2,
+      }} />
+      {/* Foliage layers */}
+      <div style={{
+        position: 'absolute',
+        bottom: height * 0.2 * scale,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 0,
+        height: 0,
+        borderLeft: `${25 * scale}px solid transparent`,
+        borderRight: `${25 * scale}px solid transparent`,
+        borderBottom: `${height * 0.5 * scale}px solid #3d5c3d`,
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: height * 0.4 * scale,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 0,
+        height: 0,
+        borderLeft: `${20 * scale}px solid transparent`,
+        borderRight: `${20 * scale}px solid transparent`,
+        borderBottom: `${height * 0.4 * scale}px solid #4a6b4a`,
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: height * 0.55 * scale,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 0,
+        height: 0,
+        borderLeft: `${14 * scale}px solid transparent`,
+        borderRight: `${14 * scale}px solid transparent`,
+        borderBottom: `${height * 0.3 * scale}px solid #5a7a5a`,
+      }} />
+    </div>
+  )
+
   return (
     <div
       style={{
@@ -1168,7 +1224,7 @@ function Loader() {
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        background: 'linear-gradient(to bottom, #87CEEB 0%, #a8d8ea 40%, #E0F6FF 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -1177,30 +1233,124 @@ function Loader() {
         opacity: fadeOut ? 0 : 1,
         transition: 'opacity 0.5s ease-out',
         pointerEvents: fadeOut ? 'none' : 'auto',
+        overflow: 'hidden',
       }}
     >
-      {/* Title */}
-      <h1 style={{
-        color: 'white',
-        fontSize: 32,
-        fontWeight: 300,
-        margin: '0 0 10px 0',
-        letterSpacing: 2,
-      }}>
-        Building Viewer
-      </h1>
-
-      <p style={{
-        color: 'rgba(255, 255, 255, 0.6)',
-        fontSize: 14,
-        margin: '0 0 40px 0',
-      }}>
-        Loading 3D Model...
-      </p>
-
-      {/* Progress container */}
+      {/* Sun glow */}
       <div style={{
-        width: 300,
+        position: 'absolute',
+        top: '15%',
+        right: '20%',
+        width: 80,
+        height: 80,
+        background: 'radial-gradient(circle, rgba(255,245,225,0.9) 0%, rgba(255,245,225,0.3) 40%, transparent 70%)',
+        borderRadius: '50%',
+      }} />
+
+      {/* Building silhouette */}
+      <div style={{
+        position: 'absolute',
+        bottom: 80,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
+        {/* Roof */}
+        <div style={{
+          width: 0,
+          height: 0,
+          borderLeft: '90px solid transparent',
+          borderRight: '90px solid transparent',
+          borderBottom: '50px solid #5a6a7a',
+        }} />
+        {/* Building body */}
+        <div style={{
+          width: 160,
+          height: 70,
+          background: '#6a7a8a',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-end',
+          gap: 15,
+          paddingBottom: 10,
+        }}>
+          {/* Windows */}
+          <div style={{ width: 20, height: 25, background: '#4a5a6a', borderRadius: 2 }} />
+          <div style={{ width: 25, height: 40, background: '#4a5a6a', borderRadius: '2px 2px 0 0' }} />
+          <div style={{ width: 20, height: 25, background: '#4a5a6a', borderRadius: 2 }} />
+        </div>
+      </div>
+
+      {/* Trees - scattered around */}
+      <TreeSilhouette left={12} height={100} scale={1.2} />
+      <TreeSilhouette left={22} height={80} scale={0.9} />
+      <TreeSilhouette left={78} height={90} scale={1.0} />
+      <TreeSilhouette left={88} height={110} scale={1.3} />
+      <TreeSilhouette left={8} height={70} scale={0.7} />
+      <TreeSilhouette left={92} height={75} scale={0.8} />
+
+      {/* Ground layers */}
+      {/* Road */}
+      <div style={{
+        position: 'absolute',
+        bottom: 60,
+        left: 0,
+        right: 0,
+        height: 20,
+        background: '#4a4a4a',
+      }} />
+      {/* Dirt/gravel */}
+      <div style={{
+        position: 'absolute',
+        bottom: 30,
+        left: 0,
+        right: 0,
+        height: 30,
+        background: '#7a7060',
+      }} />
+      {/* Grass */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 30,
+        background: '#5a7a4a',
+      }} />
+
+      {/* Title - positioned in the sky area */}
+      <div style={{
+        position: 'absolute',
+        top: '25%',
+        textAlign: 'center',
+      }}>
+        <h1 style={{
+          color: '#2a4a6a',
+          fontSize: 36,
+          fontWeight: 300,
+          margin: '0 0 8px 0',
+          letterSpacing: 3,
+          textShadow: '0 2px 10px rgba(255,255,255,0.5)',
+        }}>
+          Building Viewer
+        </h1>
+
+        <p style={{
+          color: '#4a6a8a',
+          fontSize: 14,
+          margin: 0,
+        }}>
+          Loading 3D Model...
+        </p>
+      </div>
+
+      {/* Progress container - positioned above the scene */}
+      <div style={{
+        position: 'absolute',
+        top: '45%',
+        width: 280,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -1208,38 +1358,42 @@ function Loader() {
         {/* Progress bar background */}
         <div style={{
           width: '100%',
-          height: 4,
-          background: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: 2,
+          height: 6,
+          background: 'rgba(42, 74, 106, 0.2)',
+          borderRadius: 3,
           overflow: 'hidden',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
         }}>
           {/* Progress bar fill */}
           <div style={{
             width: `${progress}%`,
             height: '100%',
-            background: 'linear-gradient(90deg, #4a6fa5, #6b8fc7)',
-            borderRadius: 2,
+            background: 'linear-gradient(90deg, #4a6fa5, #5a8fc7)',
+            borderRadius: 3,
             transition: 'width 0.3s ease-out',
+            boxShadow: '0 0 10px rgba(74, 111, 165, 0.5)',
           }} />
         </div>
 
         {/* Progress percentage */}
         <p style={{
-          color: 'rgba(255, 255, 255, 0.8)',
-          fontSize: 13,
-          marginTop: 15,
+          color: '#3a5a7a',
+          fontSize: 14,
+          marginTop: 12,
           fontFamily: 'monospace',
+          fontWeight: 500,
         }}>
           {Math.round(progress)}%
         </p>
       </div>
 
-      {/* Hint text */}
+      {/* Hint text - on the grass */}
       <p style={{
         position: 'absolute',
-        bottom: 40,
-        color: 'rgba(255, 255, 255, 0.4)',
-        fontSize: 12,
+        bottom: 8,
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: 11,
+        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
       }}>
         Use orbit controls to explore the building
       </p>
