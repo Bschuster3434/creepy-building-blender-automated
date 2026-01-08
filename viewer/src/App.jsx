@@ -556,13 +556,16 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
       {/* Configure renderer for realistic tone mapping */}
       <ToneMapping />
 
-      {/* Natural daylight lighting */}
-      <ambientLight intensity={0.3} color="#87CEEB" />
+      {/*
+        Minimal ambient light - kept very low so interiors stay dark.
+        This represents only indirect sky light that bounces everywhere.
+      */}
+      <ambientLight intensity={0.08} color="#87CEEB" />
 
-      {/* Main sun light with improved shadow settings for interiors */}
+      {/* Main sun light - the primary light source that casts shadows */}
       <directionalLight
         position={sunPosition}
-        intensity={1.8}
+        intensity={2.2}
         castShadow
         shadow-mapSize={[4096, 4096]}
         shadow-camera-far={80}
@@ -576,26 +579,21 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
         color="#FFF8E7"
       />
 
-      {/* Secondary fill light - simulates sky bounce from opposite side */}
+      {/* Secondary fill light - very subtle sky bounce */}
       <directionalLight
         position={[-40, 20, -30]}
-        intensity={0.4}
+        intensity={0.15}
         color="#B4D4E7"
       />
 
-      {/* Soft interior fill light - helps illuminate indoor spaces */}
-      <pointLight
-        position={[0, 8, 0]}
-        intensity={0.3}
-        color="#FFF5E8"
-        distance={30}
-        decay={2}
-      />
-
+      {/*
+        Hemisphere light kept minimal - this doesn't respect geometry
+        so we keep it low to avoid unrealistic interior lighting.
+      */}
       <hemisphereLight
         skyColor="#87CEEB"
-        groundColor="#5a7a5a"
-        intensity={0.6}
+        groundColor="#3a5a3a"
+        intensity={0.15}
       />
 
       {/* Atmospheric fog for depth and realism */}
@@ -718,13 +716,13 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
 
       {/* Post-processing effects for enhanced realism */}
       <EffectComposer>
-        {/* Screen-space ambient occlusion - adds subtle shadows in corners */}
+        {/* Screen-space ambient occlusion - darkens corners and crevices */}
         <SSAO
           blendFunction={BlendFunction.MULTIPLY}
-          samples={16}
-          radius={5}
-          intensity={30}
-          luminanceInfluence={0.5}
+          samples={21}
+          radius={7}
+          intensity={40}
+          luminanceInfluence={0.6}
           color="black"
         />
         {/* Subtle vignette for cinematic look */}
