@@ -1,6 +1,8 @@
 import React, { Suspense, useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, useGLTF, Sky, PointerLockControls, useProgress } from '@react-three/drei'
+import { OrbitControls, useGLTF, Sky, PointerLockControls, useProgress, Environment } from '@react-three/drei'
+import { EffectComposer, SSAO, Vignette } from '@react-three/postprocessing'
+import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 
 const MODELS = {
@@ -556,6 +558,12 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
         intensity={0.5}
       />
 
+      {/* Atmospheric fog for depth and realism */}
+      <fog attach="fog" args={['#c8d8e8', 60, 200]} />
+
+      {/* Environment map for realistic reflections on surfaces */}
+      <Environment preset="sunset" background={false} />
+
       <Suspense fallback={null}>
         <Model key={modelUrl} url={modelUrl} onLoad={handleModelLoad} onDoorsFound={handleDoorsFound} />
       </Suspense>
@@ -667,6 +675,25 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
           target={[0, 5, 0]}
         />
       )}
+
+      {/* Post-processing effects for enhanced realism */}
+      <EffectComposer>
+        {/* Screen-space ambient occlusion - adds subtle shadows in corners */}
+        <SSAO
+          blendFunction={BlendFunction.MULTIPLY}
+          samples={16}
+          radius={5}
+          intensity={30}
+          luminanceInfluence={0.5}
+          color="black"
+        />
+        {/* Subtle vignette for cinematic look */}
+        <Vignette
+          offset={0.3}
+          darkness={0.4}
+          blendFunction={BlendFunction.NORMAL}
+        />
+      </EffectComposer>
     </>
   )
 }
