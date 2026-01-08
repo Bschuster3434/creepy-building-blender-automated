@@ -1138,27 +1138,72 @@ function ReferenceGallery({ onClose, onSelectImage }) {
 }
 
 // Loading screen component - styled to match the outdoor scene
+// Uses delayed appearance to avoid flashing for quick loads
+const LOADER_DELAY = 300 // ms before showing loader
+const LOADER_MIN_DISPLAY = 500 // minimum ms to show loader once visible
+
 function Loader() {
   const { progress, active } = useProgress()
-  const [show, setShow] = useState(true)
+  const [visible, setVisible] = useState(false) // Whether loader is rendered
   const [fadeOut, setFadeOut] = useState(false)
+  const showTimerRef = useRef(null)
+  const visibleSinceRef = useRef(null)
+  const isInitialLoad = useRef(true)
 
   useEffect(() => {
-    // When loading starts, show the loader
-    if (active) {
-      setShow(true)
+    // Initial page load - show immediately (no delay for first load)
+    if (isInitialLoad.current && active) {
+      setVisible(true)
       setFadeOut(false)
+      visibleSinceRef.current = Date.now()
+      isInitialLoad.current = false
+      return
     }
-    // When loading completes, start fade out animation
-    else if (progress === 100) {
-      setFadeOut(true)
-      // Hide completely after fade animation
-      const timer = setTimeout(() => setShow(false), 500)
-      return () => clearTimeout(timer)
-    }
-  }, [active, progress])
 
-  if (!show) return null
+    // When loading starts (model switch), set delayed show timer
+    if (active) {
+      setFadeOut(false)
+      showTimerRef.current = setTimeout(() => {
+        setVisible(true)
+        visibleSinceRef.current = Date.now()
+      }, LOADER_DELAY)
+
+      return () => {
+        if (showTimerRef.current) {
+          clearTimeout(showTimerRef.current)
+          showTimerRef.current = null
+        }
+      }
+    }
+
+    // When loading completes
+    if (!active && progress === 100) {
+      // Clear any pending show timer (load finished before delay)
+      if (showTimerRef.current) {
+        clearTimeout(showTimerRef.current)
+        showTimerRef.current = null
+      }
+
+      // If loader is visible, ensure minimum display time before fading
+      if (visible && visibleSinceRef.current) {
+        const elapsed = Date.now() - visibleSinceRef.current
+        const remaining = Math.max(0, LOADER_MIN_DISPLAY - elapsed)
+
+        const fadeTimer = setTimeout(() => {
+          setFadeOut(true)
+          // Hide completely after fade animation
+          setTimeout(() => {
+            setVisible(false)
+            visibleSinceRef.current = null
+          }, 500)
+        }, remaining)
+
+        return () => clearTimeout(fadeTimer)
+      }
+    }
+  }, [active, progress, visible])
+
+  if (!visible) return null
 
   // Simple tree silhouette component
   const TreeSilhouette = ({ left, height, scale = 1 }) => (
