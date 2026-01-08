@@ -210,9 +210,15 @@ function Model({ url, onLoad, onDoorsFound }) {
           // Exclude door objects from collision (so player can walk through)
           else if (nameLower.includes('door')) {
             // Door is visible but not collidable - don't add to collision meshes
+            // But doors should still cast and receive shadows
+            child.castShadow = true
+            child.receiveShadow = true
           }
           else {
             collisionMeshes.push(child)
+            // Enable shadow casting and receiving for realistic lighting
+            child.castShadow = true
+            child.receiveShadow = true
           }
         }
       })
