@@ -557,7 +557,7 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
       />
 
       <Suspense fallback={null}>
-        <Model url={modelUrl} onLoad={handleModelLoad} onDoorsFound={handleDoorsFound} />
+        <Model key={modelUrl} url={modelUrl} onLoad={handleModelLoad} onDoorsFound={handleDoorsFound} />
       </Suspense>
 
       {/* Door animation controller */}
