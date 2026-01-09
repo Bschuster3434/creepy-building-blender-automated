@@ -1,5 +1,7 @@
 # Agent Instructions - Phase-Aware Behavior
 
+> **Status: Complete.** All three phases have been executed and approved. This document serves as reference for future building reconstruction projects using this pipeline.
+
 This document defines how each agent should behave in each phase of the building reconstruction pipeline.
 
 **Phase State:** Tracked in `work/phase_state.json`

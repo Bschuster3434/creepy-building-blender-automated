@@ -1,5 +1,16 @@
 # Creepy Building - Project Instructions
 
+## Project Status
+
+**Complete.** All three phases have been approved and frozen:
+- Phase 1: Geometry (1A: base structure, 1B: windows/doors, 1C: interior) ✓
+- Phase 2: Building appearance (materials) ✓
+- Phase 3: Environment (road, parking, lighting) ✓
+
+The instructions below document the workflow and lessons learned during development. They serve as reference for future building reconstruction projects using this pipeline.
+
+---
+
 ## Core Principle: Baseline + Delta (NOT Fresh Builds)
 
 **CRITICAL RULE FROM USER:**

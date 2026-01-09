@@ -1,5 +1,7 @@
 # Autonomous Building Reconstruction System
 
+> **Status: Complete.** All three phases have been executed and approved. This document describes the system design and phase specifications used during development.
+
 ## Objective
 
 Create an autonomous system that takes a set of reference images of a real-world building and produces a complete, high-quality 3D representation through **four clearly defined phases**.

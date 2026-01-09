@@ -51,6 +51,7 @@ An iterative, deterministic pipeline for generating and refining 3D building mod
 │   ├── renders/         # Iteration renders (iter_001/, iter_002/, etc.)
 │   ├── metrics/         # Geometry metrics (metrics_001.json, etc.)
 │   ├── reviews/         # Critique outputs (critique_001.json, etc.)
+│   ├── verification/    # Verification checkpoints
 │   └── logs/            # Execution logs (iter_001/run.log, etc.)
 ├── scripts/
 │   ├── blender/         # Blender Python scripts
@@ -63,7 +64,10 @@ An iterative, deterministic pipeline for generating and refining 3D building mod
 │   └── renders/         # Final/approved renders
 ├── docs/
 │   ├── CONTRACT.md      # I/O schemas and contracts
-│   └── NAMING.md        # File naming conventions
+│   ├── NAMING.md        # File naming conventions
+│   └── AGENT_INSTRUCTIONS.md  # Phase-aware agent behavior
+├── viewer/              # Three.js web viewer (React + Vite)
+├── .claude/             # Claude Code project instructions
 └── config/
     └── local.env        # Local environment config (BLENDER_PATH, etc.)
 ```
@@ -175,4 +179,10 @@ Geometry quality checker. Validates:
 
 ## Status
 
-This pipeline is currently scaffolded with placeholder scripts. See TODOs in individual files for implementation details.
+**Project Complete.** All three phases have been successfully executed:
+
+- **Phase 1**: Geometry (1A: base structure, 1B: windows/doors, 1C: interior) ✓
+- **Phase 2**: Building appearance (materials and textures) ✓
+- **Phase 3**: Environment (road, parking lot, lighting) ✓
+
+The final model is available in `exports/glb/` and can be viewed in the Three.js web viewer (`viewer/`).
