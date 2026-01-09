@@ -6,8 +6,11 @@ import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 
 const MODELS = {
+  'Phase 3 (Environment)': [
+    { name: 'Phase 3 - Iter 001 (Latest)', file: '/building_phase_3_iter_001.glb' },
+  ],
   'Phase 2 (Materials)': [
-    { name: 'Phase 2 - Iter 015 (Latest)', file: '/building_phase_2_iter_015.glb' },
+    { name: 'Phase 2 - Iter 015', file: '/building_phase_2_iter_015.glb' },
     { name: 'Phase 2 - Iter 014', file: '/building_phase_2_iter_014.glb' },
     { name: 'Phase 2 - Iter 013', file: '/building_phase_2_iter_013.glb' },
     { name: 'Phase 2 - Iter 012', file: '/building_phase_2_iter_012.glb' },
