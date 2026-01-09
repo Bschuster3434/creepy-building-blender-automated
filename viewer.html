@@ -221,26 +221,7 @@
         sunLight.shadow.bias = -0.0001; // Reduce shadow acne
         scene.add(sunLight);
 
-        // Debug helper to visualize shadow camera (remove after testing)
-        const shadowHelper = new THREE.CameraHelper(sunLight.shadow.camera);
-        scene.add(shadowHelper);
-
-        // Ground plane
-        const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.MeshStandardMaterial({
-            color: 0x3a5f3a,
-            roughness: 0.8
-        });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        scene.add(ground);
-
-        // Grid helper (optional, for spatial reference)
-        const gridHelper = new THREE.GridHelper(100, 100, 0x444444, 0x222222);
-        scene.add(gridHelper);
-
-        // Load GLB model
+        // Load GLB model (ground/grass is included in the GLB)
         const loader = new GLTFLoader();
         loader.load(
             'exports/glb/building_phase_3_iter_001.glb',
