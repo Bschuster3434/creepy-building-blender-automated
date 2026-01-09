@@ -7,7 +7,14 @@ import * as THREE from 'three'
 
 const MODELS = {
   'Phase 2 (Materials)': [
-    { name: 'Phase 2 - Iter 008 (Latest)', file: '/building_phase_2_iter_008.glb' },
+    { name: 'Phase 2 - Iter 015 (Latest)', file: '/building_phase_2_iter_015.glb' },
+    { name: 'Phase 2 - Iter 014', file: '/building_phase_2_iter_014.glb' },
+    { name: 'Phase 2 - Iter 013', file: '/building_phase_2_iter_013.glb' },
+    { name: 'Phase 2 - Iter 012', file: '/building_phase_2_iter_012.glb' },
+    { name: 'Phase 2 - Iter 011', file: '/building_phase_2_iter_011.glb' },
+    { name: 'Phase 2 - Iter 010', file: '/building_phase_2_iter_010.glb' },
+    { name: 'Phase 2 - Iter 009', file: '/building_phase_2_iter_009.glb' },
+    { name: 'Phase 2 - Iter 008', file: '/building_phase_2_iter_008.glb' },
     { name: 'Phase 2 - Iter 007', file: '/building_phase_2_iter_007.glb' },
     { name: 'Phase 2 - Iter 006', file: '/building_phase_2_iter_006.glb' },
     { name: 'Phase 2 - Iter 005', file: '/building_phase_2_iter_005.glb' },
