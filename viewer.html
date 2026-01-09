@@ -191,24 +191,39 @@
             }
         });
 
-        // Lighting - Golden hour sun from front-right for eerie abandoned mood
-        const ambientLight = new THREE.AmbientLight(0x8899aa, 0.3); // Cool, dim ambient
+        // Lighting - Dingy abandoned interior with sun through windows
+        // Very dim ambient so interior defaults to dark
+        const ambientLight = new THREE.AmbientLight(0x404050, 0.05);
         scene.add(ambientLight);
 
-        // Sun from front-right, low angle to shine through windows
-        const sunLight = new THREE.DirectionalLight(0xffd9a6, 1.0); // Warm golden
-        sunLight.position.set(15, 10, -20); // Front-right, 25° elevation
+        // Subtle hemisphere light for natural sky/ground fill
+        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x3a3a3a, 0.15);
+        scene.add(hemiLight);
+
+        // Strong sun from front-right, low angle to shine through windows
+        const sunLight = new THREE.DirectionalLight(0xffd9a6, 2.0); // Strong warm golden
+        sunLight.position.set(10, 8, -25); // Lower, more frontal angle for window penetration
         sunLight.castShadow = true;
-        sunLight.shadow.camera.left = -15;
-        sunLight.shadow.camera.right = 15;
-        sunLight.shadow.camera.top = 15;
-        sunLight.shadow.camera.bottom = -15;
-        sunLight.shadow.camera.near = 1;
-        sunLight.shadow.camera.far = 60;
+
+        // Aim sun at building center
+        sunLight.target.position.set(0, 0, 0);
+        scene.add(sunLight.target);
+
+        // Expanded shadow frustum to encompass building interior
+        sunLight.shadow.camera.left = -20;
+        sunLight.shadow.camera.right = 20;
+        sunLight.shadow.camera.top = 20;
+        sunLight.shadow.camera.bottom = -20;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 80;
         sunLight.shadow.mapSize.width = 4096;  // High resolution for interior detail
         sunLight.shadow.mapSize.height = 4096;
         sunLight.shadow.bias = -0.0001; // Reduce shadow acne
         scene.add(sunLight);
+
+        // Debug helper to visualize shadow camera (remove after testing)
+        const shadowHelper = new THREE.CameraHelper(sunLight.shadow.camera);
+        scene.add(shadowHelper);
 
         // Ground plane
         const groundGeometry = new THREE.PlaneGeometry(100, 100);
