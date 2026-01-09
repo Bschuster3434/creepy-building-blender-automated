@@ -245,41 +245,6 @@ function Model({ url, onLoad, onDoorsFound }) {
   return <primitive object={scene} />
 }
 
-// Simple low-poly tree
-function Tree({ position, scale = 1, trunkHeight = 2, foliageRadius = 1.5, onTrunkRef }) {
-  const actualTrunkHeight = trunkHeight * scale
-  const actualFoliageRadius = foliageRadius * scale
-  const trunkRef = useRef()
-
-  useEffect(() => {
-    if (onTrunkRef && trunkRef.current) {
-      onTrunkRef(trunkRef.current)
-    }
-  }, [onTrunkRef])
-
-  return (
-    <group position={position}>
-      {/* Trunk */}
-      <mesh ref={trunkRef} position={[0, actualTrunkHeight / 2, 0]} castShadow>
-        <cylinderGeometry args={[0.15 * scale, 0.25 * scale, actualTrunkHeight, 8]} />
-        <meshStandardMaterial color="#5D4037" roughness={0.9} />
-      </mesh>
-      {/* Foliage - layered cones for fuller look */}
-      <mesh position={[0, actualTrunkHeight + actualFoliageRadius * 0.3, 0]} castShadow>
-        <coneGeometry args={[actualFoliageRadius, actualFoliageRadius * 2, 8]} />
-        <meshStandardMaterial color="#2E7D32" roughness={0.8} />
-      </mesh>
-      <mesh position={[0, actualTrunkHeight + actualFoliageRadius * 1.0, 0]} castShadow>
-        <coneGeometry args={[actualFoliageRadius * 0.7, actualFoliageRadius * 1.5, 8]} />
-        <meshStandardMaterial color="#388E3C" roughness={0.8} />
-      </mesh>
-      <mesh position={[0, actualTrunkHeight + actualFoliageRadius * 1.5, 0]} castShadow>
-        <coneGeometry args={[actualFoliageRadius * 0.4, actualFoliageRadius * 1, 8]} />
-        <meshStandardMaterial color="#43A047" roughness={0.8} />
-      </mesh>
-    </group>
-  )
-}
 
 // Tone mapping and renderer configuration for realistic lighting
 function ToneMapping() {
@@ -296,26 +261,6 @@ function ToneMapping() {
   return null
 }
 
-// Tree positions based on reference photos - trees behind and around the building
-const TREE_POSITIONS = [
-  // Large tree to the left (prominent in reference)
-  { pos: [-15, 0, -5], scale: 2.5, trunk: 4, foliage: 3 },
-  // Trees behind building
-  { pos: [-20, 0, -20], scale: 1.8, trunk: 3, foliage: 2.5 },
-  { pos: [-10, 0, -25], scale: 2.0, trunk: 3.5, foliage: 2.8 },
-  { pos: [0, 0, -30], scale: 1.5, trunk: 2.5, foliage: 2 },
-  { pos: [12, 0, -25], scale: 2.2, trunk: 4, foliage: 3 },
-  { pos: [25, 0, -20], scale: 1.7, trunk: 3, foliage: 2.3 },
-  // Trees to the right
-  { pos: [20, 0, -8], scale: 1.9, trunk: 3.5, foliage: 2.5 },
-  { pos: [28, 0, 5], scale: 1.6, trunk: 2.8, foliage: 2 },
-  // Scattered background trees
-  { pos: [-30, 0, -15], scale: 1.4, trunk: 2.5, foliage: 2 },
-  { pos: [35, 0, -15], scale: 1.5, trunk: 2.8, foliage: 2.2 },
-  { pos: [-25, 0, 10], scale: 1.3, trunk: 2.2, foliage: 1.8 },
-  { pos: [30, 0, -30], scale: 2.0, trunk: 3.5, foliage: 2.8 },
-  { pos: [-35, 0, -30], scale: 1.8, trunk: 3, foliage: 2.5 },
-]
 
 // First-person movement controller with collision detection
 function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
@@ -528,25 +473,16 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
   const controlsRef = useRef()
   const { camera } = useThree()
   const [buildingMeshes, setBuildingMeshes] = useState([])
-  const [treeMeshes, setTreeMeshes] = useState([])
   const [doorPivots, setDoorPivots] = useState([])
 
-  // Combine building and tree meshes for collision
+  // Building meshes for collision
   const collisionMeshes = useMemo(() => {
-    return [...buildingMeshes, ...treeMeshes]
-  }, [buildingMeshes, treeMeshes])
+    return buildingMeshes
+  }, [buildingMeshes])
 
   // Handle model load - collect meshes for collision
   const handleModelLoad = useCallback((meshes) => {
     setBuildingMeshes(meshes)
-  }, [])
-
-  // Handle tree trunk registration
-  const handleTreeTrunk = useCallback((mesh) => {
-    setTreeMeshes(prev => {
-      if (prev.includes(mesh)) return prev
-      return [...prev, mesh]
-    })
   }, [])
 
   // Handle door pivots found in model
@@ -643,75 +579,7 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
         turbidity={10}
       />
 
-      {/* Ground System - layered for realism */}
-
-      {/* Base grass field */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.02, 0]}
-        receiveShadow
-      >
-        <planeGeometry args={[150, 150]} />
-        <meshStandardMaterial
-          color="#5a7a4a"
-          roughness={1}
-          metalness={0}
-        />
-      </mesh>
-
-      {/* Concrete/asphalt parking pad in front of building */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.01, 8]}
-        receiveShadow
-      >
-        <planeGeometry args={[25, 12]} />
-        <meshStandardMaterial
-          color="#8a8a8a"
-          roughness={0.95}
-          metalness={0}
-        />
-      </mesh>
-
-      {/* Worn dirt/gravel transition around concrete */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.015, 8]}
-        receiveShadow
-      >
-        <planeGeometry args={[30, 16]} />
-        <meshStandardMaterial
-          color="#7a7060"
-          roughness={1}
-          metalness={0}
-        />
-      </mesh>
-
-      {/* Road strip at front */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.005, 20]}
-        receiveShadow
-      >
-        <planeGeometry args={[80, 8]} />
-        <meshStandardMaterial
-          color="#3a3a3a"
-          roughness={0.8}
-          metalness={0}
-        />
-      </mesh>
-
-      {/* Trees around the property */}
-      {TREE_POSITIONS.map((tree, i) => (
-        <Tree
-          key={i}
-          position={tree.pos}
-          scale={tree.scale}
-          trunkHeight={tree.trunk}
-          foliageRadius={tree.foliage}
-          onTrunkRef={handleTreeTrunk}
-        />
-      ))}
+      {/* Ground and trees are now included in the GLB model */}
 
       {isFirstPerson ? (
         <>
