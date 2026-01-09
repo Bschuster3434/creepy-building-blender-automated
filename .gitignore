@@ -15,7 +15,6 @@ desktop.ini
 node_modules/
 
 # Local environment
-.claude/
 config/local.env
 
 # Temp files

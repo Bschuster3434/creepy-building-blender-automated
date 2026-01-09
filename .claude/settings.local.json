@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__blender__get_scene_info",
+      "mcp__blender__get_viewport_screenshot",
+      "mcp__blender__execute_blender_code",
+      "Bash(tree:*)",
+      "Bash(python3:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(findstr:*)",
+      "mcp__notion__notion-fetch",
+      "Bash(dir:*)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\brian\\\\Documents\\\\Blender\\\\Creepy Building Myrtle Beach Highway\\\\inputs\\\\reference\\\\Doors and Windows\\\\Back Door Reference\" -Force)",
+      "Bash(cd:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git pull:*)",
+      "mcp__blender__search_polyhaven_assets",
+      "mcp__blender__download_polyhaven_asset",
+      "mcp__blender__get_object_info",
+      "mcp__blender__set_texture"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "blender"
+  ]
+}
