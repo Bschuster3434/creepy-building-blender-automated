@@ -16,6 +16,9 @@ export function VirtualJoystick({ onMove, size = 120 }) {
   const maxDistance = size / 2 - 20 // Max knob movement from center
 
   const handleTouchStart = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
     if (touchIdRef.current !== null) return // Already tracking a touch
 
     const touch = e.touches[0]
@@ -27,20 +30,13 @@ export function VirtualJoystick({ onMove, size = 120 }) {
     touchIdRef.current = touch.identifier
     setIsActive(true)
 
-    // Initial position
-    handleTouchMove(e)
-  }, [])
-
-  const handleTouchMove = useCallback((e) => {
-    if (touchIdRef.current === null) return
-
-    const touch = Array.from(e.touches).find(t => t.identifier === touchIdRef.current)
-    if (!touch) return
-
-    e.preventDefault()
-
+    // Calculate initial position
     const dx = touch.clientX - centerRef.current.x
     const dy = touch.clientY - centerRef.current.y
+    updateJoystick(dx, dy)
+  }, [])
+
+  const updateJoystick = useCallback((dx, dy) => {
     const distance = Math.sqrt(dx * dx + dy * dy)
     const clampedDistance = Math.min(distance, maxDistance)
 
@@ -61,9 +57,26 @@ export function VirtualJoystick({ onMove, size = 120 }) {
     onMove({ x: normalizedX, y: normalizedY })
   }, [maxDistance, onMove])
 
+  const handleTouchMove = useCallback((e) => {
+    if (touchIdRef.current === null) return
+
+    const touch = Array.from(e.touches).find(t => t.identifier === touchIdRef.current)
+    if (!touch) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    const dx = touch.clientX - centerRef.current.x
+    const dy = touch.clientY - centerRef.current.y
+    updateJoystick(dx, dy)
+  }, [updateJoystick])
+
   const handleTouchEnd = useCallback((e) => {
     const touch = Array.from(e.changedTouches).find(t => t.identifier === touchIdRef.current)
     if (!touch) return
+
+    e.preventDefault()
+    e.stopPropagation()
 
     touchIdRef.current = null
     setIsActive(false)
@@ -82,6 +95,7 @@ export function VirtualJoystick({ onMove, size = 120 }) {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       style={{
         position: 'absolute',
         bottom: 30,
@@ -97,6 +111,7 @@ export function VirtualJoystick({ onMove, size = 120 }) {
         touchAction: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none',
+        zIndex: 100,
       }}
     >
       <div
@@ -111,6 +126,7 @@ export function VirtualJoystick({ onMove, size = 120 }) {
           border: '2px solid rgba(255, 255, 255, 0.6)',
           transition: isActive ? 'none' : 'transform 0.2s ease-out',
           boxShadow: isActive ? '0 0 15px rgba(74, 111, 165, 0.5)' : 'none',
+          pointerEvents: 'none',
         }}
       />
     </div>
@@ -119,37 +135,45 @@ export function VirtualJoystick({ onMove, size = 120 }) {
 
 /**
  * Touch look area for camera rotation
- * Takes up most of the screen for easy look-around
+ * Uses a ref to accumulate deltas for smooth frame-by-frame updates
  */
-export function TouchLookArea({ onLook, sensitivity = 0.003 }) {
-  const areaRef = useRef(null)
+export function TouchLookArea({ lookDeltaRef, sensitivity = 0.003 }) {
   const lastTouchRef = useRef(null)
   const touchIdRef = useRef(null)
+  const areaRef = useRef(null)
 
   const handleTouchStart = useCallback((e) => {
-    // Ignore if touch started on UI elements
-    if (e.target !== areaRef.current) return
+    // Only handle if not already tracking a touch
     if (touchIdRef.current !== null) return
 
-    const touch = e.touches[0]
-    touchIdRef.current = touch.identifier
-    lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
+    // Find the first touch that's in our area (right side of screen)
+    for (const touch of e.touches) {
+      // Skip touches on the left third of the screen (joystick area)
+      if (touch.clientX < window.innerWidth * 0.35) continue
+
+      touchIdRef.current = touch.identifier
+      lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
+      break
+    }
   }, [])
 
   const handleTouchMove = useCallback((e) => {
-    if (touchIdRef.current === null) return
+    if (touchIdRef.current === null || !lastTouchRef.current) return
 
     const touch = Array.from(e.touches).find(t => t.identifier === touchIdRef.current)
-    if (!touch || !lastTouchRef.current) return
+    if (!touch) return
 
     const dx = touch.clientX - lastTouchRef.current.x
     const dy = touch.clientY - lastTouchRef.current.y
 
     lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
 
-    // Send rotation delta
-    onLook({ x: -dx * sensitivity, y: -dy * sensitivity })
-  }, [sensitivity, onLook])
+    // Accumulate rotation deltas in the ref (will be consumed by useFrame)
+    if (lookDeltaRef.current) {
+      lookDeltaRef.current.x += -dx * sensitivity
+      lookDeltaRef.current.y += -dy * sensitivity
+    }
+  }, [sensitivity, lookDeltaRef])
 
   const handleTouchEnd = useCallback((e) => {
     const touch = Array.from(e.changedTouches).find(t => t.identifier === touchIdRef.current)
@@ -159,21 +183,39 @@ export function TouchLookArea({ onLook, sensitivity = 0.003 }) {
     lastTouchRef.current = null
   }, [])
 
+  // Use document-level listeners for reliable touch tracking
+  useEffect(() => {
+    const onTouchStart = (e) => handleTouchStart(e)
+    const onTouchMove = (e) => handleTouchMove(e)
+    const onTouchEnd = (e) => handleTouchEnd(e)
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: true })
+    document.addEventListener('touchend', onTouchEnd, { passive: true })
+    document.addEventListener('touchcancel', onTouchEnd, { passive: true })
+
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchmove', onTouchMove)
+      document.removeEventListener('touchend', onTouchEnd)
+      document.removeEventListener('touchcancel', onTouchEnd)
+    }
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd])
+
+  // Visual indicator for the look area (optional, mostly invisible)
   return (
     <div
       ref={areaRef}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
       style={{
         position: 'absolute',
-        top: 80,
-        left: 0,
+        top: 60,
+        left: '35%',
         right: 0,
-        bottom: 180,
-        touchAction: 'none',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
+        bottom: 0,
+        // Uncomment to debug touch area:
+        // background: 'rgba(255, 0, 0, 0.1)',
+        pointerEvents: 'none', // Let touches pass through to document
+        zIndex: 50,
       }}
     />
   )
@@ -181,24 +223,28 @@ export function TouchLookArea({ onLook, sensitivity = 0.003 }) {
 
 /**
  * First-person movement controller for mobile
- * Uses touch inputs instead of keyboard/mouse
+ * Uses refs for smooth frame-by-frame touch input processing
  */
 export function MobileFirstPersonMovement({
   speed = 5,
   collisionMeshes = [],
   moveInput,
-  lookInput
+  lookDeltaRef
 }) {
   const { camera } = useThree()
   const raycaster = useRef(new THREE.Raycaster())
   const euler = useRef(new THREE.Euler(0, 0, 0, 'YXZ'))
+  const initialized = useRef(false)
 
   const COLLISION_DISTANCE = 1.5
   const PUSH_BACK_DISTANCE = 0.8
 
-  // Initialize camera rotation from current orientation
+  // Initialize camera rotation from current orientation (only once)
   useEffect(() => {
-    euler.current.setFromQuaternion(camera.quaternion)
+    if (!initialized.current) {
+      euler.current.setFromQuaternion(camera.quaternion)
+      initialized.current = true
+    }
   }, [camera])
 
   // Check collision in a given direction
@@ -224,15 +270,24 @@ export function MobileFirstPersonMovement({
   }, [camera, collisionMeshes])
 
   useFrame((_, delta) => {
-    // Apply look rotation
-    if (lookInput.x !== 0 || lookInput.y !== 0) {
-      euler.current.y += lookInput.x
-      euler.current.x += lookInput.y
+    // Apply look rotation from accumulated deltas
+    if (lookDeltaRef.current) {
+      const lookX = lookDeltaRef.current.x
+      const lookY = lookDeltaRef.current.y
 
-      // Clamp vertical rotation
-      euler.current.x = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, euler.current.x))
+      if (lookX !== 0 || lookY !== 0) {
+        euler.current.y += lookX
+        euler.current.x += lookY
 
-      camera.quaternion.setFromEuler(euler.current)
+        // Clamp vertical rotation
+        euler.current.x = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, euler.current.x))
+
+        camera.quaternion.setFromEuler(euler.current)
+
+        // Reset the deltas after consuming them
+        lookDeltaRef.current.x = 0
+        lookDeltaRef.current.y = 0
+      }
     }
 
     // Get movement direction based on camera orientation
@@ -262,7 +317,7 @@ export function MobileFirstPersonMovement({
     }
 
     // Apply movement from joystick
-    if (moveInput.x !== 0 || moveInput.y !== 0) {
+    if (moveInput && (moveInput.x !== 0 || moveInput.y !== 0)) {
       const moveSpeed = speed * delta
 
       // Forward/backward (joystick Y)
@@ -305,6 +360,7 @@ export function MobileActionButton({ label, onPress, visible = true }) {
     <button
       onTouchStart={(e) => {
         e.preventDefault()
+        e.stopPropagation()
         onPress()
       }}
       style={{
@@ -327,6 +383,7 @@ export function MobileActionButton({ label, onPress, visible = true }) {
         WebkitUserSelect: 'none',
         boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
         cursor: 'pointer',
+        zIndex: 100,
       }}
     >
       {label}

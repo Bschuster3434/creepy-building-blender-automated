@@ -489,7 +489,7 @@ function DoorController({ doors, isFirstPerson, onNearDoorChange }) {
   return null
 }
 
-function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, isMobile, mobileMove, mobileLook }) {
+function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, isMobile, mobileMove, lookDeltaRef }) {
   const controlsRef = useRef()
   const { camera } = useThree()
   const [buildingMeshes, setBuildingMeshes] = useState([])
@@ -608,7 +608,7 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, i
             speed={8}
             collisionMeshes={collisionMeshes}
             moveInput={mobileMove}
-            lookInput={mobileLook}
+            lookDeltaRef={lookDeltaRef}
           />
         ) : (
           // Desktop first-person controls - keyboard/mouse
@@ -1440,17 +1440,9 @@ export default function App() {
   // Mobile detection and state
   const isMobile = useIsMobile()
   const [mobileMove, setMobileMove] = useState({ x: 0, y: 0 })
-  const [mobileLook, setMobileLook] = useState({ x: 0, y: 0 })
+  const lookDeltaRef = useRef({ x: 0, y: 0 }) // Use ref for smooth frame-by-frame look updates
   const [showMobileHelp, setShowMobileHelp] = useState(false)
   const [mobileRefCategory, setMobileRefCategory] = useState('Exterior')
-
-  // Reset mobile look input each frame (it's a delta, not absolute)
-  useEffect(() => {
-    if (mobileLook.x !== 0 || mobileLook.y !== 0) {
-      const timer = setTimeout(() => setMobileLook({ x: 0, y: 0 }), 16)
-      return () => clearTimeout(timer)
-    }
-  }, [mobileLook])
 
   // Toggle mode with F key (desktop) or button (mobile)
   const toggleMode = useCallback(() => {
@@ -1525,7 +1517,7 @@ export default function App() {
           onNearDoorChange={setNearDoor}
           isMobile={isMobile}
           mobileMove={mobileMove}
-          mobileLook={mobileLook}
+          lookDeltaRef={lookDeltaRef}
         />
       </Canvas>
 
@@ -1709,7 +1701,7 @@ export default function App() {
             <>
               {/* Touch look area - covers most of the screen */}
               <TouchLookArea
-                onLook={setMobileLook}
+                lookDeltaRef={lookDeltaRef}
                 sensitivity={0.004}
               />
 
