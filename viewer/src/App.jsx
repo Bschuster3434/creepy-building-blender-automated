@@ -5,6 +5,23 @@ import { EffectComposer, SSAO, Vignette } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 
+// Mobile-specific imports
+import { useIsMobile } from './hooks/useIsMobile'
+import {
+  VirtualJoystick,
+  TouchLookArea,
+  MobileFirstPersonMovement,
+  MobileActionButton
+} from './components/mobile/MobileTouchControls'
+import {
+  MobileControlsPanel,
+  MobileReferencePanel,
+  MobileReferenceGallery,
+  MobileLightbox,
+  MobileRefButton,
+  MobileFirstPersonHelp
+} from './components/mobile/MobileUI'
+
 const MODELS = {
   'Phase 3 (Environment)': [
     { name: 'Phase 3 - Iter 004 (Latest)', file: '/building_phase_3_iter_004.glb' },
@@ -472,7 +489,7 @@ function DoorController({ doors, isFirstPerson, onNearDoorChange }) {
   return null
 }
 
-function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange }) {
+function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, isMobile, mobileMove, lookDeltaRef }) {
   const controlsRef = useRef()
   const { camera } = useThree()
   const [buildingMeshes, setBuildingMeshes] = useState([])
@@ -585,19 +602,33 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
       {/* Ground and trees are now included in the GLB model */}
 
       {isFirstPerson ? (
-        <>
-          <PointerLockControls
-            ref={controlsRef}
-            onUnlock={onExitFirstPerson}
+        isMobile ? (
+          // Mobile first-person controls - touch-based movement
+          <MobileFirstPersonMovement
+            speed={8}
+            collisionMeshes={collisionMeshes}
+            moveInput={mobileMove}
+            lookDeltaRef={lookDeltaRef}
           />
-          <FirstPersonMovement speed={8} collisionMeshes={collisionMeshes} />
-        </>
+        ) : (
+          // Desktop first-person controls - keyboard/mouse
+          <>
+            <PointerLockControls
+              ref={controlsRef}
+              onUnlock={onExitFirstPerson}
+            />
+            <FirstPersonMovement speed={8} collisionMeshes={collisionMeshes} />
+          </>
+        )
       ) : (
         <OrbitControls
           makeDefault
           minDistance={5}
           maxDistance={100}
           target={[0, 5, 0]}
+          // Enable touch controls for orbit mode on mobile
+          enablePan={!isMobile}
+          touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
         />
       )}
 
@@ -1406,10 +1437,25 @@ export default function App() {
   const [lightboxImage, setLightboxImage] = useState(null)
   const [nearDoor, setNearDoor] = useState(null)
 
-  // Toggle mode with F key
+  // Mobile detection and state
+  const isMobile = useIsMobile()
+  const [mobileMove, setMobileMove] = useState({ x: 0, y: 0 })
+  const lookDeltaRef = useRef({ x: 0, y: 0 }) // Use ref for smooth frame-by-frame look updates
+  const [showMobileHelp, setShowMobileHelp] = useState(false)
+  const [mobileRefCategory, setMobileRefCategory] = useState('Exterior')
+
+  // Toggle mode with F key (desktop) or button (mobile)
   const toggleMode = useCallback(() => {
-    setIsFirstPerson(prev => !prev)
-  }, [])
+    setIsFirstPerson(prev => {
+      const newValue = !prev
+      // Show help on mobile when entering first-person for the first time
+      if (newValue && isMobile && !localStorage.getItem('mobileHelpShown')) {
+        setShowMobileHelp(true)
+        localStorage.setItem('mobileHelpShown', 'true')
+      }
+      return newValue
+    })
+  }, [isMobile])
 
   // Toggle reference panel with R key, gallery with Shift+R
   const toggleReferencePanel = useCallback(() => {
@@ -1425,7 +1471,11 @@ export default function App() {
     setLightboxImage(image)
   }, [])
 
+  // Keyboard shortcuts (desktop only)
   useEffect(() => {
+    // Skip keyboard handlers on mobile - use touch controls instead
+    if (isMobile) return
+
     const handleKeyDown = (e) => {
       // Don't handle keys when lightbox or gallery is open (they handle their own keys)
       if (lightboxImage) return
@@ -1447,7 +1497,7 @@ export default function App() {
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [toggleMode, toggleReferencePanel, openReferenceGallery, showReferenceGallery, lightboxImage])
+  }, [toggleMode, toggleReferencePanel, openReferenceGallery, showReferenceGallery, lightboxImage, isMobile])
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -1465,165 +1515,257 @@ export default function App() {
           isFirstPerson={isFirstPerson}
           onExitFirstPerson={() => setIsFirstPerson(false)}
           onNearDoorChange={setNearDoor}
+          isMobile={isMobile}
+          mobileMove={mobileMove}
+          lookDeltaRef={lookDeltaRef}
         />
       </Canvas>
 
-      {/* Controls Panel - Always visible */}
-      <div style={{
-        position: 'absolute',
-        top: 20,
-        left: 20,
-        background: 'rgba(0, 0, 0, 0.85)',
-        padding: '15px 20px',
-        borderRadius: 8,
-        color: 'white',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: 14 }}>Building Viewer</h3>
-        <p style={{ margin: '0 0 10px 0', fontSize: 11, opacity: 0.6 }}>
-          {ALL_MODELS.length} models available
-        </p>
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(Number(e.target.value))}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 4,
-            border: 'none',
-            background: '#333',
+      {/* ========== DESKTOP UI ========== */}
+      {!isMobile && (
+        <>
+          {/* Controls Panel - Desktop */}
+          <div style={{
+            position: 'absolute',
+            top: 20,
+            left: 20,
+            background: 'rgba(0, 0, 0, 0.85)',
+            padding: '15px 20px',
+            borderRadius: 8,
             color: 'white',
-            fontSize: 13,
-            cursor: 'pointer',
-            width: '100%',
-            maxWidth: 280
-          }}
-        >
-          {(() => {
-            let globalIndex = 0
-            return Object.entries(MODELS).map(([group, models]) => (
-              <optgroup key={group} label={group}>
-                {models.map((model) => {
-                  const idx = globalIndex++
-                  return <option key={model.file} value={idx}>{model.name}</option>
-                })}
-              </optgroup>
-            ))
-          })()}
-        </select>
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: 14 }}>Building Viewer</h3>
+            <p style={{ margin: '0 0 10px 0', fontSize: 11, opacity: 0.6 }}>
+              {ALL_MODELS.length} models available
+            </p>
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(Number(e.target.value))}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 4,
+                border: 'none',
+                background: '#333',
+                color: 'white',
+                fontSize: 13,
+                cursor: 'pointer',
+                width: '100%',
+                maxWidth: 280
+              }}
+            >
+              {(() => {
+                let globalIndex = 0
+                return Object.entries(MODELS).map(([group, models]) => (
+                  <optgroup key={group} label={group}>
+                    {models.map((model) => {
+                      const idx = globalIndex++
+                      return <option key={model.file} value={idx}>{model.name}</option>
+                    })}
+                  </optgroup>
+                ))
+              })()}
+            </select>
 
-        <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.7 }}>
-          {isFirstPerson ? 'WASD to move | Mouse to look' : 'Drag to rotate | Scroll to zoom'}
-        </p>
-        <p style={{ margin: '8px 0 0 0', fontSize: 11, opacity: 0.5 }}>
-          Press <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: 3 }}>R</span> for references
-        </p>
-      </div>
+            <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.7 }}>
+              {isFirstPerson ? 'WASD to move | Mouse to look' : 'Drag to rotate | Scroll to zoom'}
+            </p>
+            <p style={{ margin: '8px 0 0 0', fontSize: 11, opacity: 0.5 }}>
+              Press <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: 3 }}>R</span> for references
+            </p>
+          </div>
 
-      {/* Mode Indicator - Always visible */}
-      <div style={{
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        background: isFirstPerson ? 'rgba(74, 111, 165, 0.9)' : 'rgba(0, 0, 0, 0.85)',
-        padding: '12px 20px',
-        borderRadius: 8,
-        color: 'white',
-        textAlign: 'center'
-      }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
-          {isFirstPerson ? 'First-Person Mode' : 'Orbit Mode'}
-        </p>
-        <p style={{ margin: '6px 0 0 0', fontSize: 12, opacity: 0.8 }}>
-          Press <span style={{
-            background: 'rgba(255,255,255,0.2)',
-            padding: '2px 8px',
-            borderRadius: 4,
-            fontFamily: 'monospace',
-            fontWeight: 'bold'
-          }}>F</span> to switch
-        </p>
-      </div>
+          {/* Mode Indicator - Desktop */}
+          <div style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            background: isFirstPerson ? 'rgba(74, 111, 165, 0.9)' : 'rgba(0, 0, 0, 0.85)',
+            padding: '12px 20px',
+            borderRadius: 8,
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
+              {isFirstPerson ? 'First-Person Mode' : 'Orbit Mode'}
+            </p>
+            <p style={{ margin: '6px 0 0 0', fontSize: 12, opacity: 0.8 }}>
+              Press <span style={{
+                background: 'rgba(255,255,255,0.2)',
+                padding: '2px 8px',
+                borderRadius: 4,
+                fontFamily: 'monospace',
+                fontWeight: 'bold'
+              }}>F</span> to switch
+            </p>
+          </div>
 
-      {/* First-Person Controls Help */}
-      {isFirstPerson && (
-        <div style={{
-          position: 'absolute',
-          bottom: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0, 0, 0, 0.85)',
-          padding: '12px 24px',
-          borderRadius: 8,
-          color: 'white',
-          textAlign: 'center'
-        }}>
-          <p style={{ margin: 0, fontSize: 13 }}>
-            <strong>WASD</strong> to move | <strong>Mouse</strong> to look | <strong>ESC</strong> to unlock mouse
-          </p>
-          <p style={{ margin: '5px 0 0 0', fontSize: 11, opacity: 0.7 }}>
-            Click to enable mouse look
-          </p>
-        </div>
+          {/* First-Person Controls Help - Desktop */}
+          {isFirstPerson && (
+            <div style={{
+              position: 'absolute',
+              bottom: 20,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(0, 0, 0, 0.85)',
+              padding: '12px 24px',
+              borderRadius: 8,
+              color: 'white',
+              textAlign: 'center'
+            }}>
+              <p style={{ margin: 0, fontSize: 13 }}>
+                <strong>WASD</strong> to move | <strong>Mouse</strong> to look | <strong>ESC</strong> to unlock mouse
+              </p>
+              <p style={{ margin: '5px 0 0 0', fontSize: 11, opacity: 0.7 }}>
+                Click to enable mouse look
+              </p>
+            </div>
+          )}
+
+          {/* Door Interaction Indicator - Desktop */}
+          {isFirstPerson && nearDoor && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'rgba(0, 0, 0, 0.8)',
+              padding: '15px 25px',
+              borderRadius: 8,
+              color: 'white',
+              textAlign: 'center',
+              border: '2px solid rgba(74, 111, 165, 0.8)',
+              pointerEvents: 'none',
+            }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
+                {nearDoor}
+              </p>
+              <p style={{ margin: '8px 0 0 0', fontSize: 13 }}>
+                Press <span style={{
+                  background: 'rgba(74, 111, 165, 0.8)',
+                  padding: '3px 10px',
+                  borderRadius: 4,
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold',
+                  marginLeft: 4,
+                  marginRight: 4,
+                }}>E</span> to open/close
+              </p>
+            </div>
+          )}
+
+          {/* Reference Panel - Desktop */}
+          {showReferencePanel && !showReferenceGallery && (
+            <ReferencePanel
+              onClose={() => setShowReferencePanel(false)}
+              onOpenGallery={openReferenceGallery}
+              onSelectImage={handleImageSelect}
+            />
+          )}
+
+          {/* Reference Gallery - Desktop */}
+          {showReferenceGallery && (
+            <ReferenceGallery
+              onClose={() => setShowReferenceGallery(false)}
+              onSelectImage={handleImageSelect}
+            />
+          )}
+
+          {/* Lightbox - Desktop */}
+          {lightboxImage && (
+            <Lightbox
+              image={lightboxImage}
+              allImages={ALL_REFERENCES}
+              onClose={() => setLightboxImage(null)}
+              onNavigate={setLightboxImage}
+            />
+          )}
+        </>
       )}
 
-      {/* Door Interaction Indicator */}
-      {isFirstPerson && nearDoor && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(0, 0, 0, 0.8)',
-          padding: '15px 25px',
-          borderRadius: 8,
-          color: 'white',
-          textAlign: 'center',
-          border: '2px solid rgba(74, 111, 165, 0.8)',
-          pointerEvents: 'none',
-        }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
-            {nearDoor}
-          </p>
-          <p style={{ margin: '8px 0 0 0', fontSize: 13 }}>
-            Press <span style={{
-              background: 'rgba(74, 111, 165, 0.8)',
-              padding: '3px 10px',
-              borderRadius: 4,
-              fontFamily: 'monospace',
-              fontWeight: 'bold',
-              marginLeft: 4,
-              marginRight: 4,
-            }}>E</span> to open/close
-          </p>
-        </div>
-      )}
+      {/* ========== MOBILE UI ========== */}
+      {isMobile && (
+        <>
+          {/* Mobile Controls Panel - Top header bar */}
+          <MobileControlsPanel
+            models={ALL_MODELS}
+            selectedModel={selectedModel}
+            onModelSelect={setSelectedModel}
+            isFirstPerson={isFirstPerson}
+            onToggleMode={toggleMode}
+          />
 
-      {/* Reference Panel - Bottom right */}
-      {showReferencePanel && !showReferenceGallery && (
-        <ReferencePanel
-          onClose={() => setShowReferencePanel(false)}
-          onOpenGallery={openReferenceGallery}
-          onSelectImage={handleImageSelect}
-        />
-      )}
+          {/* Mobile Touch Controls - Only in first-person mode */}
+          {isFirstPerson && (
+            <>
+              {/* Touch look area - covers most of the screen */}
+              <TouchLookArea
+                lookDeltaRef={lookDeltaRef}
+                sensitivity={0.004}
+              />
 
-      {/* Reference Gallery - Full screen modal */}
-      {showReferenceGallery && (
-        <ReferenceGallery
-          onClose={() => setShowReferenceGallery(false)}
-          onSelectImage={handleImageSelect}
-        />
-      )}
+              {/* Virtual joystick - bottom left */}
+              <VirtualJoystick
+                onMove={setMobileMove}
+                size={130}
+              />
 
-      {/* Lightbox - Full screen image viewer */}
-      {lightboxImage && (
-        <Lightbox
-          image={lightboxImage}
-          allImages={ALL_REFERENCES}
-          onClose={() => setLightboxImage(null)}
-          onNavigate={setLightboxImage}
-        />
+              {/* Action button for doors - bottom right */}
+              <MobileActionButton
+                label={nearDoor ? 'Open' : 'Action'}
+                visible={!!nearDoor}
+                onPress={() => {
+                  // Dispatch E key event for door interaction
+                  document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' }))
+                }}
+              />
+            </>
+          )}
+
+          {/* Mobile Reference Button - Only in orbit mode */}
+          {!isFirstPerson && !showReferencePanel && !showReferenceGallery && (
+            <MobileRefButton onClick={() => setShowReferencePanel(true)} />
+          )}
+
+          {/* Mobile Reference Panel */}
+          {showReferencePanel && !showReferenceGallery && (
+            <MobileReferencePanel
+              references={REFERENCES}
+              activeCategory={mobileRefCategory}
+              onCategoryChange={setMobileRefCategory}
+              onSelectImage={handleImageSelect}
+              onClose={() => setShowReferencePanel(false)}
+              onOpenGallery={openReferenceGallery}
+            />
+          )}
+
+          {/* Mobile Reference Gallery */}
+          {showReferenceGallery && (
+            <MobileReferenceGallery
+              references={REFERENCES}
+              onSelectImage={handleImageSelect}
+              onClose={() => setShowReferenceGallery(false)}
+            />
+          )}
+
+          {/* Mobile Lightbox */}
+          {lightboxImage && (
+            <MobileLightbox
+              image={lightboxImage}
+              allImages={ALL_REFERENCES}
+              onClose={() => setLightboxImage(null)}
+              onNavigate={setLightboxImage}
+            />
+          )}
+
+          {/* Mobile First-Person Help Overlay */}
+          {showMobileHelp && (
+            <MobileFirstPersonHelp
+              onDismiss={() => setShowMobileHelp(false)}
+            />
+          )}
+        </>
       )}
 
       {/* Loading screen overlay */}
