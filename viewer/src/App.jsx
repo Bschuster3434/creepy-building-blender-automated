@@ -5,6 +5,23 @@ import { EffectComposer, SSAO, Vignette } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 
+// Mobile-specific imports
+import { useIsMobile } from './hooks/useIsMobile'
+import {
+  VirtualJoystick,
+  TouchLookArea,
+  MobileFirstPersonMovement,
+  MobileActionButton
+} from './components/mobile/MobileTouchControls'
+import {
+  MobileControlsPanel,
+  MobileReferencePanel,
+  MobileReferenceGallery,
+  MobileLightbox,
+  MobileRefButton,
+  MobileFirstPersonHelp
+} from './components/mobile/MobileUI'
+
 const MODELS = {
   'Phase 3 (Environment)': [
     { name: 'Phase 3 - Iter 004 (Latest)', file: '/building_phase_3_iter_004.glb' },
@@ -293,11 +310,6 @@ function Model({ url, onLoad, onDoorsFound }) {
       if (onDoorsFound && doorPivots.length > 0) {
         onDoorsFound(doorPivots)
       }
-
-      // Signal that model is loaded for capture mode
-      if (CAPTURE_MODE) {
-        window.__MODEL_LOADED__ = true;
-      }
     }
   }, [scene, onLoad, onDoorsFound])
 
@@ -320,30 +332,6 @@ function ToneMapping() {
   return null
 }
 
-// Camera position tracker - updates a global with current camera position
-function CameraTracker({ onUpdate }) {
-  const { camera } = useThree()
-
-  useFrame(() => {
-    if (onUpdate) {
-      onUpdate({
-        position: [
-          Math.round(camera.position.x * 100) / 100,
-          Math.round(camera.position.y * 100) / 100,
-          Math.round(camera.position.z * 100) / 100
-        ],
-        rotation: [
-          Math.round(camera.rotation.x * 1000) / 1000,
-          Math.round(camera.rotation.y * 1000) / 1000,
-          Math.round(camera.rotation.z * 1000) / 1000
-        ]
-      })
-    }
-  })
-
-  return null
-}
-
 // Static camera for capture mode - fixed position, no controls
 // Position and FOV are set via Canvas camera prop; this component handles orientation
 function StaticCamera() {
@@ -362,7 +350,6 @@ function StaticCamera() {
 
   return null
 }
-
 
 // First-person movement controller with collision detection
 function FirstPersonMovement({ speed = 5, collisionMeshes = [] }) {
@@ -571,7 +558,7 @@ function DoorController({ doors, isFirstPerson, onNearDoorChange }) {
   return null
 }
 
-function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, onCameraUpdate }) {
+function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, isMobile, mobileMove, lookDeltaRef }) {
   const controlsRef = useRef()
   const { camera } = useThree()
   const [buildingMeshes, setBuildingMeshes] = useState([])
@@ -688,19 +675,33 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, o
       {CAPTURE_MODE ? (
         <StaticCamera />
       ) : isFirstPerson ? (
-        <>
-          <PointerLockControls
-            ref={controlsRef}
-            onUnlock={onExitFirstPerson}
+        isMobile ? (
+          // Mobile first-person controls - touch-based movement
+          <MobileFirstPersonMovement
+            speed={8}
+            collisionMeshes={collisionMeshes}
+            moveInput={mobileMove}
+            lookDeltaRef={lookDeltaRef}
           />
-          <FirstPersonMovement speed={8} collisionMeshes={collisionMeshes} />
-        </>
+        ) : (
+          // Desktop first-person controls - keyboard/mouse
+          <>
+            <PointerLockControls
+              ref={controlsRef}
+              onUnlock={onExitFirstPerson}
+            />
+            <FirstPersonMovement speed={8} collisionMeshes={collisionMeshes} />
+          </>
+        )
       ) : (
         <OrbitControls
           makeDefault
           minDistance={5}
           maxDistance={100}
           target={[0, 5, 0]}
+          // Enable touch controls for orbit mode on mobile
+          enablePan={!isMobile}
+          touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
         />
       )}
 
@@ -1233,6 +1234,11 @@ function Loader() {
 
     // When loading completes
     if (!active && progress === 100) {
+      // Signal to capture script that model is loaded
+      if (CAPTURE_MODE) {
+        window.__MODEL_LOADED__ = true
+      }
+
       // Clear any pending show timer (load finished before delay)
       if (showTimerRef.current) {
         clearTimeout(showTimerRef.current)
@@ -1502,17 +1508,32 @@ function Loader() {
 }
 
 export default function App() {
-  const [selectedModel, setSelectedModel] = useState(getInitialModelIndex())
+  const [selectedModel, setSelectedModel] = useState(0)
   const [isFirstPerson, setIsFirstPerson] = useState(false)
   const [showReferencePanel, setShowReferencePanel] = useState(false)
   const [showReferenceGallery, setShowReferenceGallery] = useState(false)
   const [lightboxImage, setLightboxImage] = useState(null)
   const [nearDoor, setNearDoor] = useState(null)
 
-  // Toggle mode with F key
+  // Mobile detection and state
+  const isMobile = useIsMobile()
+  const [mobileMove, setMobileMove] = useState({ x: 0, y: 0 })
+  const lookDeltaRef = useRef({ x: 0, y: 0 }) // Use ref for smooth frame-by-frame look updates
+  const [showMobileHelp, setShowMobileHelp] = useState(false)
+  const [mobileRefCategory, setMobileRefCategory] = useState('Exterior')
+
+  // Toggle mode with F key (desktop) or button (mobile)
   const toggleMode = useCallback(() => {
-    setIsFirstPerson(prev => !prev)
-  }, [])
+    setIsFirstPerson(prev => {
+      const newValue = !prev
+      // Show help on mobile when entering first-person for the first time
+      if (newValue && isMobile && !localStorage.getItem('mobileHelpShown')) {
+        setShowMobileHelp(true)
+        localStorage.setItem('mobileHelpShown', 'true')
+      }
+      return newValue
+    })
+  }, [isMobile])
 
   // Toggle reference panel with R key, gallery with Shift+R
   const toggleReferencePanel = useCallback(() => {
@@ -1528,7 +1549,11 @@ export default function App() {
     setLightboxImage(image)
   }, [])
 
+  // Keyboard shortcuts (desktop only)
   useEffect(() => {
+    // Skip keyboard handlers on mobile - use touch controls instead
+    if (isMobile) return
+
     const handleKeyDown = (e) => {
       // Don't handle keys when lightbox or gallery is open (they handle their own keys)
       if (lightboxImage) return
@@ -1550,7 +1575,7 @@ export default function App() {
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [toggleMode, toggleReferencePanel, openReferenceGallery, showReferenceGallery, lightboxImage])
+  }, [toggleMode, toggleReferencePanel, openReferenceGallery, showReferenceGallery, lightboxImage, isMobile])
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -1571,13 +1596,16 @@ export default function App() {
           isFirstPerson={isFirstPerson}
           onExitFirstPerson={() => setIsFirstPerson(false)}
           onNearDoorChange={setNearDoor}
+          isMobile={isMobile}
+          mobileMove={mobileMove}
+          lookDeltaRef={lookDeltaRef}
         />
       </Canvas>
 
-      {/* Hide all UI in capture mode */}
-      {!CAPTURE_MODE && (
+      {/* ========== DESKTOP UI ========== */}
+      {!CAPTURE_MODE && !isMobile && (
         <>
-          {/* Controls Panel - Always visible */}
+          {/* Controls Panel - Desktop */}
           <div style={{
             position: 'absolute',
             top: 20,
@@ -1629,7 +1657,7 @@ export default function App() {
             </p>
           </div>
 
-          {/* Mode Indicator - Always visible */}
+          {/* Mode Indicator - Desktop */}
           <div style={{
             position: 'absolute',
             top: 20,
@@ -1654,7 +1682,7 @@ export default function App() {
             </p>
           </div>
 
-          {/* First-Person Controls Help */}
+          {/* First-Person Controls Help - Desktop */}
           {isFirstPerson && (
             <div style={{
               position: 'absolute',
@@ -1676,7 +1704,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Door Interaction Indicator */}
+          {/* Door Interaction Indicator - Desktop */}
           {isFirstPerson && nearDoor && (
             <div style={{
               position: 'absolute',
@@ -1708,7 +1736,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Reference Panel - Bottom right */}
+          {/* Reference Panel - Desktop */}
           {showReferencePanel && !showReferenceGallery && (
             <ReferencePanel
               onClose={() => setShowReferencePanel(false)}
@@ -1717,7 +1745,7 @@ export default function App() {
             />
           )}
 
-          {/* Reference Gallery - Full screen modal */}
+          {/* Reference Gallery - Desktop */}
           {showReferenceGallery && (
             <ReferenceGallery
               onClose={() => setShowReferenceGallery(false)}
@@ -1725,7 +1753,7 @@ export default function App() {
             />
           )}
 
-          {/* Lightbox - Full screen image viewer */}
+          {/* Lightbox - Desktop */}
           {lightboxImage && (
             <Lightbox
               image={lightboxImage}
@@ -1734,11 +1762,95 @@ export default function App() {
               onNavigate={setLightboxImage}
             />
           )}
-
-          {/* Loading screen overlay */}
-          <Loader />
         </>
       )}
+
+      {/* ========== MOBILE UI ========== */}
+      {!CAPTURE_MODE && isMobile && (
+        <>
+          {/* Mobile Controls Panel - Top header bar */}
+          <MobileControlsPanel
+            models={ALL_MODELS}
+            selectedModel={selectedModel}
+            onModelSelect={setSelectedModel}
+            isFirstPerson={isFirstPerson}
+            onToggleMode={toggleMode}
+          />
+
+          {/* Mobile Touch Controls - Only in first-person mode */}
+          {isFirstPerson && (
+            <>
+              {/* Touch look area - covers most of the screen */}
+              <TouchLookArea
+                lookDeltaRef={lookDeltaRef}
+                sensitivity={0.004}
+              />
+
+              {/* Virtual joystick - bottom left */}
+              <VirtualJoystick
+                onMove={setMobileMove}
+                size={130}
+              />
+
+              {/* Action button for doors - bottom right */}
+              <MobileActionButton
+                label={nearDoor ? 'Open' : 'Action'}
+                visible={!!nearDoor}
+                onPress={() => {
+                  // Dispatch E key event for door interaction
+                  document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' }))
+                }}
+              />
+            </>
+          )}
+
+          {/* Mobile Reference Button - Only in orbit mode */}
+          {!isFirstPerson && !showReferencePanel && !showReferenceGallery && (
+            <MobileRefButton onClick={() => setShowReferencePanel(true)} />
+          )}
+
+          {/* Mobile Reference Panel */}
+          {showReferencePanel && !showReferenceGallery && (
+            <MobileReferencePanel
+              references={REFERENCES}
+              activeCategory={mobileRefCategory}
+              onCategoryChange={setMobileRefCategory}
+              onSelectImage={handleImageSelect}
+              onClose={() => setShowReferencePanel(false)}
+              onOpenGallery={openReferenceGallery}
+            />
+          )}
+
+          {/* Mobile Reference Gallery */}
+          {showReferenceGallery && (
+            <MobileReferenceGallery
+              references={REFERENCES}
+              onSelectImage={handleImageSelect}
+              onClose={() => setShowReferenceGallery(false)}
+            />
+          )}
+
+          {/* Mobile Lightbox */}
+          {lightboxImage && (
+            <MobileLightbox
+              image={lightboxImage}
+              allImages={ALL_REFERENCES}
+              onClose={() => setLightboxImage(null)}
+              onNavigate={setLightboxImage}
+            />
+          )}
+
+          {/* Mobile First-Person Help Overlay */}
+          {showMobileHelp && (
+            <MobileFirstPersonHelp
+              onDismiss={() => setShowMobileHelp(false)}
+            />
+          )}
+        </>
+      )}
+
+      {/* Loading screen overlay */}
+      <Loader />
     </div>
   )
 }
