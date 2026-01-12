@@ -121,6 +121,57 @@ const MODELS = {
 
 const ALL_MODELS = Object.values(MODELS).flat()
 
+// Parse URL parameters for capture mode
+const urlParams = new URLSearchParams(window.location.search);
+const CAPTURE_MODE = urlParams.get('capture') === 'true';
+const MODEL_PARAM = urlParams.get('model');
+
+// Camera parameters from URL (for per-frame camera control)
+const CAM_POS_PARAM = urlParams.get('camPos'); // format: "x,y,z"
+const CAM_TARGET_PARAM = urlParams.get('camTarget'); // format: "x,y,z"
+const CAM_ROT_PARAM = urlParams.get('camRot'); // format: "x,y,z" in radians - if set, ignores target
+const CAM_FOV_PARAM = urlParams.get('camFov');
+
+// Find initial model index from URL parameter or default to first
+const getInitialModelIndex = () => {
+  if (MODEL_PARAM) {
+    const index = ALL_MODELS.findIndex(m => m.file === `/${MODEL_PARAM}` || m.file === MODEL_PARAM);
+    if (index !== -1) return index;
+  }
+  return 0;
+};
+
+// Parse camera settings from URL or use defaults
+const getCaptureCamera = () => {
+  const defaultCamera = {
+    position: [28, 20, 28],
+    target: [0, 4, 0],
+    rotation: null, // if set, rotation is used instead of lookAt target
+    fov: 42
+  };
+
+  if (CAM_POS_PARAM) {
+    const pos = CAM_POS_PARAM.split(',').map(Number);
+    if (pos.length === 3) defaultCamera.position = pos;
+  }
+  if (CAM_ROT_PARAM) {
+    const rot = CAM_ROT_PARAM.split(',').map(Number);
+    if (rot.length === 3) defaultCamera.rotation = rot;
+  }
+  if (CAM_TARGET_PARAM && !CAM_ROT_PARAM) {
+    const target = CAM_TARGET_PARAM.split(',').map(Number);
+    if (target.length === 3) defaultCamera.target = target;
+  }
+  if (CAM_FOV_PARAM) {
+    defaultCamera.fov = Number(CAM_FOV_PARAM);
+  }
+
+  return defaultCamera;
+};
+
+// Capture mode camera settings
+const CAPTURE_CAMERA = getCaptureCamera();
+
 // Reference images organized by category
 const REFERENCES = {
   'Exterior': {
@@ -242,6 +293,11 @@ function Model({ url, onLoad, onDoorsFound }) {
       if (onDoorsFound && doorPivots.length > 0) {
         onDoorsFound(doorPivots)
       }
+
+      // Signal that model is loaded for capture mode
+      if (CAPTURE_MODE) {
+        window.__MODEL_LOADED__ = true;
+      }
     }
   }, [scene, onLoad, onDoorsFound])
 
@@ -260,6 +316,49 @@ function ToneMapping() {
     // Ensure proper color space for realistic colors
     gl.outputColorSpace = THREE.SRGBColorSpace
   }, [gl])
+
+  return null
+}
+
+// Camera position tracker - updates a global with current camera position
+function CameraTracker({ onUpdate }) {
+  const { camera } = useThree()
+
+  useFrame(() => {
+    if (onUpdate) {
+      onUpdate({
+        position: [
+          Math.round(camera.position.x * 100) / 100,
+          Math.round(camera.position.y * 100) / 100,
+          Math.round(camera.position.z * 100) / 100
+        ],
+        rotation: [
+          Math.round(camera.rotation.x * 1000) / 1000,
+          Math.round(camera.rotation.y * 1000) / 1000,
+          Math.round(camera.rotation.z * 1000) / 1000
+        ]
+      })
+    }
+  })
+
+  return null
+}
+
+// Static camera for capture mode - fixed position, no controls
+// Position and FOV are set via Canvas camera prop; this component handles orientation
+function StaticCamera() {
+  const { camera } = useThree()
+
+  useEffect(() => {
+    // Position and FOV are already set by Canvas camera prop
+    // Just set the orientation (rotation or lookAt)
+    if (CAPTURE_CAMERA.rotation) {
+      camera.rotation.set(...CAPTURE_CAMERA.rotation)
+    } else {
+      camera.lookAt(...CAPTURE_CAMERA.target)
+    }
+    camera.updateProjectionMatrix()
+  }, [camera])
 
   return null
 }
@@ -472,7 +571,7 @@ function DoorController({ doors, isFirstPerson, onNearDoorChange }) {
   return null
 }
 
-function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange }) {
+function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange, onCameraUpdate }) {
   const controlsRef = useRef()
   const { camera } = useThree()
   const [buildingMeshes, setBuildingMeshes] = useState([])
@@ -495,6 +594,7 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
 
   // Position camera for first-person view (in front of building, looking at it)
   useEffect(() => {
+    if (CAPTURE_MODE) return;  // Don't override camera in capture mode
     if (isFirstPerson) {
       camera.position.set(0, 1.7, 15)
       camera.lookAt(0, 3, 0)
@@ -584,7 +684,10 @@ function Scene({ modelUrl, isFirstPerson, onExitFirstPerson, onNearDoorChange })
 
       {/* Ground and trees are now included in the GLB model */}
 
-      {isFirstPerson ? (
+      {/* Controls - use static camera in capture mode, otherwise normal controls */}
+      {CAPTURE_MODE ? (
+        <StaticCamera />
+      ) : isFirstPerson ? (
         <>
           <PointerLockControls
             ref={controlsRef}
@@ -1399,7 +1502,7 @@ function Loader() {
 }
 
 export default function App() {
-  const [selectedModel, setSelectedModel] = useState(0)
+  const [selectedModel, setSelectedModel] = useState(getInitialModelIndex())
   const [isFirstPerson, setIsFirstPerson] = useState(false)
   const [showReferencePanel, setShowReferencePanel] = useState(false)
   const [showReferenceGallery, setShowReferenceGallery] = useState(false)
@@ -1457,7 +1560,10 @@ export default function App() {
           antialias: true,
           shadowMap: { type: THREE.PCFSoftShadowMap }
         }}
-        camera={{ position: [20, 15, 20], fov: 50 }}
+        camera={{
+          position: CAPTURE_MODE ? CAPTURE_CAMERA.position : [20, 15, 20],
+          fov: CAPTURE_MODE ? CAPTURE_CAMERA.fov : 50
+        }}
         style={{ background: 'linear-gradient(to bottom, #87CEEB, #E0F6FF)' }}
       >
         <Scene
@@ -1468,166 +1574,171 @@ export default function App() {
         />
       </Canvas>
 
-      {/* Controls Panel - Always visible */}
-      <div style={{
-        position: 'absolute',
-        top: 20,
-        left: 20,
-        background: 'rgba(0, 0, 0, 0.85)',
-        padding: '15px 20px',
-        borderRadius: 8,
-        color: 'white',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: 14 }}>Building Viewer</h3>
-        <p style={{ margin: '0 0 10px 0', fontSize: 11, opacity: 0.6 }}>
-          {ALL_MODELS.length} models available
-        </p>
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(Number(e.target.value))}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 4,
-            border: 'none',
-            background: '#333',
+      {/* Hide all UI in capture mode */}
+      {!CAPTURE_MODE && (
+        <>
+          {/* Controls Panel - Always visible */}
+          <div style={{
+            position: 'absolute',
+            top: 20,
+            left: 20,
+            background: 'rgba(0, 0, 0, 0.85)',
+            padding: '15px 20px',
+            borderRadius: 8,
             color: 'white',
-            fontSize: 13,
-            cursor: 'pointer',
-            width: '100%',
-            maxWidth: 280
-          }}
-        >
-          {(() => {
-            let globalIndex = 0
-            return Object.entries(MODELS).map(([group, models]) => (
-              <optgroup key={group} label={group}>
-                {models.map((model) => {
-                  const idx = globalIndex++
-                  return <option key={model.file} value={idx}>{model.name}</option>
-                })}
-              </optgroup>
-            ))
-          })()}
-        </select>
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: 14 }}>Building Viewer</h3>
+            <p style={{ margin: '0 0 10px 0', fontSize: 11, opacity: 0.6 }}>
+              {ALL_MODELS.length} models available
+            </p>
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(Number(e.target.value))}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 4,
+                border: 'none',
+                background: '#333',
+                color: 'white',
+                fontSize: 13,
+                cursor: 'pointer',
+                width: '100%',
+                maxWidth: 280
+              }}
+            >
+              {(() => {
+                let globalIndex = 0
+                return Object.entries(MODELS).map(([group, models]) => (
+                  <optgroup key={group} label={group}>
+                    {models.map((model) => {
+                      const idx = globalIndex++
+                      return <option key={model.file} value={idx}>{model.name}</option>
+                    })}
+                  </optgroup>
+                ))
+              })()}
+            </select>
 
-        <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.7 }}>
-          {isFirstPerson ? 'WASD to move | Mouse to look' : 'Drag to rotate | Scroll to zoom'}
-        </p>
-        <p style={{ margin: '8px 0 0 0', fontSize: 11, opacity: 0.5 }}>
-          Press <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: 3 }}>R</span> for references
-        </p>
-      </div>
+            <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.7 }}>
+              {isFirstPerson ? 'WASD to move | Mouse to look' : 'Drag to rotate | Scroll to zoom'}
+            </p>
+            <p style={{ margin: '8px 0 0 0', fontSize: 11, opacity: 0.5 }}>
+              Press <span style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: 3 }}>R</span> for references
+            </p>
+          </div>
 
-      {/* Mode Indicator - Always visible */}
-      <div style={{
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        background: isFirstPerson ? 'rgba(74, 111, 165, 0.9)' : 'rgba(0, 0, 0, 0.85)',
-        padding: '12px 20px',
-        borderRadius: 8,
-        color: 'white',
-        textAlign: 'center'
-      }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
-          {isFirstPerson ? 'First-Person Mode' : 'Orbit Mode'}
-        </p>
-        <p style={{ margin: '6px 0 0 0', fontSize: 12, opacity: 0.8 }}>
-          Press <span style={{
-            background: 'rgba(255,255,255,0.2)',
-            padding: '2px 8px',
-            borderRadius: 4,
-            fontFamily: 'monospace',
-            fontWeight: 'bold'
-          }}>F</span> to switch
-        </p>
-      </div>
+          {/* Mode Indicator - Always visible */}
+          <div style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            background: isFirstPerson ? 'rgba(74, 111, 165, 0.9)' : 'rgba(0, 0, 0, 0.85)',
+            padding: '12px 20px',
+            borderRadius: 8,
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
+              {isFirstPerson ? 'First-Person Mode' : 'Orbit Mode'}
+            </p>
+            <p style={{ margin: '6px 0 0 0', fontSize: 12, opacity: 0.8 }}>
+              Press <span style={{
+                background: 'rgba(255,255,255,0.2)',
+                padding: '2px 8px',
+                borderRadius: 4,
+                fontFamily: 'monospace',
+                fontWeight: 'bold'
+              }}>F</span> to switch
+            </p>
+          </div>
 
-      {/* First-Person Controls Help */}
-      {isFirstPerson && (
-        <div style={{
-          position: 'absolute',
-          bottom: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0, 0, 0, 0.85)',
-          padding: '12px 24px',
-          borderRadius: 8,
-          color: 'white',
-          textAlign: 'center'
-        }}>
-          <p style={{ margin: 0, fontSize: 13 }}>
-            <strong>WASD</strong> to move | <strong>Mouse</strong> to look | <strong>ESC</strong> to unlock mouse
-          </p>
-          <p style={{ margin: '5px 0 0 0', fontSize: 11, opacity: 0.7 }}>
-            Click to enable mouse look
-          </p>
-        </div>
+          {/* First-Person Controls Help */}
+          {isFirstPerson && (
+            <div style={{
+              position: 'absolute',
+              bottom: 20,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(0, 0, 0, 0.85)',
+              padding: '12px 24px',
+              borderRadius: 8,
+              color: 'white',
+              textAlign: 'center'
+            }}>
+              <p style={{ margin: 0, fontSize: 13 }}>
+                <strong>WASD</strong> to move | <strong>Mouse</strong> to look | <strong>ESC</strong> to unlock mouse
+              </p>
+              <p style={{ margin: '5px 0 0 0', fontSize: 11, opacity: 0.7 }}>
+                Click to enable mouse look
+              </p>
+            </div>
+          )}
+
+          {/* Door Interaction Indicator */}
+          {isFirstPerson && nearDoor && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'rgba(0, 0, 0, 0.8)',
+              padding: '15px 25px',
+              borderRadius: 8,
+              color: 'white',
+              textAlign: 'center',
+              border: '2px solid rgba(74, 111, 165, 0.8)',
+              pointerEvents: 'none',
+            }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
+                {nearDoor}
+              </p>
+              <p style={{ margin: '8px 0 0 0', fontSize: 13 }}>
+                Press <span style={{
+                  background: 'rgba(74, 111, 165, 0.8)',
+                  padding: '3px 10px',
+                  borderRadius: 4,
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold',
+                  marginLeft: 4,
+                  marginRight: 4,
+                }}>E</span> to open/close
+              </p>
+            </div>
+          )}
+
+          {/* Reference Panel - Bottom right */}
+          {showReferencePanel && !showReferenceGallery && (
+            <ReferencePanel
+              onClose={() => setShowReferencePanel(false)}
+              onOpenGallery={openReferenceGallery}
+              onSelectImage={handleImageSelect}
+            />
+          )}
+
+          {/* Reference Gallery - Full screen modal */}
+          {showReferenceGallery && (
+            <ReferenceGallery
+              onClose={() => setShowReferenceGallery(false)}
+              onSelectImage={handleImageSelect}
+            />
+          )}
+
+          {/* Lightbox - Full screen image viewer */}
+          {lightboxImage && (
+            <Lightbox
+              image={lightboxImage}
+              allImages={ALL_REFERENCES}
+              onClose={() => setLightboxImage(null)}
+              onNavigate={setLightboxImage}
+            />
+          )}
+
+          {/* Loading screen overlay */}
+          <Loader />
+        </>
       )}
-
-      {/* Door Interaction Indicator */}
-      {isFirstPerson && nearDoor && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(0, 0, 0, 0.8)',
-          padding: '15px 25px',
-          borderRadius: 8,
-          color: 'white',
-          textAlign: 'center',
-          border: '2px solid rgba(74, 111, 165, 0.8)',
-          pointerEvents: 'none',
-        }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 'bold' }}>
-            {nearDoor}
-          </p>
-          <p style={{ margin: '8px 0 0 0', fontSize: 13 }}>
-            Press <span style={{
-              background: 'rgba(74, 111, 165, 0.8)',
-              padding: '3px 10px',
-              borderRadius: 4,
-              fontFamily: 'monospace',
-              fontWeight: 'bold',
-              marginLeft: 4,
-              marginRight: 4,
-            }}>E</span> to open/close
-          </p>
-        </div>
-      )}
-
-      {/* Reference Panel - Bottom right */}
-      {showReferencePanel && !showReferenceGallery && (
-        <ReferencePanel
-          onClose={() => setShowReferencePanel(false)}
-          onOpenGallery={openReferenceGallery}
-          onSelectImage={handleImageSelect}
-        />
-      )}
-
-      {/* Reference Gallery - Full screen modal */}
-      {showReferenceGallery && (
-        <ReferenceGallery
-          onClose={() => setShowReferenceGallery(false)}
-          onSelectImage={handleImageSelect}
-        />
-      )}
-
-      {/* Lightbox - Full screen image viewer */}
-      {lightboxImage && (
-        <Lightbox
-          image={lightboxImage}
-          allImages={ALL_REFERENCES}
-          onClose={() => setLightboxImage(null)}
-          onNavigate={setLightboxImage}
-        />
-      )}
-
-      {/* Loading screen overlay */}
-      <Loader />
     </div>
   )
 }

@@ -1,0 +1,14 @@
+{
+  "name": "gif-capture",
+  "version": "1.0.0",
+  "description": "Automated GIF capture for building evolution visualization",
+  "type": "module",
+  "scripts": {
+    "capture": "node capture-frames.js",
+    "compile": "node compile-gif.js",
+    "build-gif": "npm run capture && npm run compile"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}
